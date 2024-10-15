@@ -10,8 +10,8 @@ namespace Server.Handle_Packet
             new HandleLogs().Addmsg($"Client {client.Ip} opened [{title}]", Color.Blue);
             if (Properties.Settings.Default.Notification)
             {
-                Program.form1.notifyIcon1.BalloonTipText = $"Client {client.Ip} opened [{title}]";
-                Program.form1.notifyIcon1.ShowBalloonTip(100);
+                Program.Form1.notifyIcon1.BalloonTipText = $"Client {client.Ip} opened [{title}]";
+                Program.Form1.notifyIcon1.ShowBalloonTip(100);
             }
         }
     }

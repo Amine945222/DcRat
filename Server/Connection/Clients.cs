@@ -145,7 +145,7 @@ namespace Server.Connection
         public void Disconnected()
         {
             if (LV != null)
-                Program.form1.Invoke((MethodInvoker)(() =>
+                Program.Form1.Invoke((MethodInvoker)(() =>
                 {
                     try
                     {
@@ -188,7 +188,7 @@ namespace Server.Connection
 
         public bool GetListview(string id)
         {
-            foreach (ListViewItem item in Program.form1.listView4.Items)
+            foreach (ListViewItem item in Program.Form1.listView4.Items)
                 if (item.ToolTipText == id)
                     return true;
             return false;

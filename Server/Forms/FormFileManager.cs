@@ -133,7 +133,7 @@ namespace Server.Forms
                                 {
                                     Name = "socketUpload:" + Guid.NewGuid(),
                                     Text = "socketUpload:" + Client.ID,
-                                    F = Program.form1,
+                                    F = Program.Form1,
                                     Client = Client
                                 };
                                 SD.FileSize = new FileInfo(ofile).Length;

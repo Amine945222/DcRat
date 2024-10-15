@@ -18,7 +18,7 @@ namespace Server.Handle_Packet
                 lock (Settings.LockListviewClients)
                 {
                     if (client.LV != null)
-                        client.LV.SubItems[Program.form1.lv_act.Index].Text =
+                        client.LV.SubItems[Program.Form1.lv_act.Index].Text =
                             unpack_msgpack.ForcePathObject("Message").AsString;
                     else
                         Debug.WriteLine("Temp socket pinged server");
@@ -37,14 +37,14 @@ namespace Server.Handle_Packet
                 {
                     if (client.LV != null)
                     {
-                        client.LV.SubItems[Program.form1.lv_ping.Index].Text =
+                        client.LV.SubItems[Program.Form1.lv_ping.Index].Text =
                             unpack_msgpack.ForcePathObject("Message").AsInteger + " MS";
                         if (unpack_msgpack.ForcePathObject("Message").AsInteger > 600)
-                            client.LV.SubItems[Program.form1.lv_ping.Index].ForeColor = Color.Red;
+                            client.LV.SubItems[Program.Form1.lv_ping.Index].ForeColor = Color.Red;
                         else if (unpack_msgpack.ForcePathObject("Message").AsInteger > 300)
-                            client.LV.SubItems[Program.form1.lv_ping.Index].ForeColor = Color.Orange;
+                            client.LV.SubItems[Program.Form1.lv_ping.Index].ForeColor = Color.Orange;
                         else
-                            client.LV.SubItems[Program.form1.lv_ping.Index].ForeColor = Color.Green;
+                            client.LV.SubItems[Program.Form1.lv_ping.Index].ForeColor = Color.Green;
                     }
                 }
             }

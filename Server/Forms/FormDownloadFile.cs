@@ -98,12 +98,12 @@ namespace Server.Forms
                         }
                     }
 
-                    Program.form1.BeginInvoke((MethodInvoker)(() => { Close(); }));
+                    Program.Form1.BeginInvoke((MethodInvoker)(() => { Close(); }));
                 }
                 catch
                 {
                     Client?.Disconnected();
-                    Program.form1.BeginInvoke((MethodInvoker)(() =>
+                    Program.Form1.BeginInvoke((MethodInvoker)(() =>
                     {
                         labelsize.Text = "Error";
                         labelsize.ForeColor = Color.Red;

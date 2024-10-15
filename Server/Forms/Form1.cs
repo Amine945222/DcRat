@@ -1120,8 +1120,8 @@ namespace Server
                         if (item.Text == lv.Text)
                             return;
 
-                Program.form1.listView4.Items.Add(lv);
-                Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                Program.Form1.listView4.Items.Add(lv);
+                Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                 getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, false));
             }
@@ -1180,8 +1180,8 @@ namespace Server
                             if (item.Text == lv.Text)
                                 return;
 
-                    Program.form1.listView4.Items.Add(lv);
-                    Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                    Program.Form1.listView4.Items.Add(lv);
+                    Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                     getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, false));
                 }
@@ -1275,8 +1275,8 @@ namespace Server
                         if (item.Text == lv.Text)
                             return;
 
-                Program.form1.listView4.Items.Add(lv);
-                Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                Program.Form1.listView4.Items.Add(lv);
+                Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                 getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, false));
             }
@@ -1308,8 +1308,8 @@ namespace Server
                         if (item.Text == lv.Text)
                             return;
 
-                Program.form1.listView4.Items.Add(lv);
-                Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                Program.Form1.listView4.Items.Add(lv);
+                Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                 getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, false));
             }
@@ -1341,8 +1341,8 @@ namespace Server
                         if (item.Text == lv.Text)
                             return;
 
-                Program.form1.listView4.Items.Add(lv);
-                Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                Program.Form1.listView4.Items.Add(lv);
+                Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                 getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, true));
             }
@@ -1374,8 +1374,8 @@ namespace Server
                         if (item.Text == lv.Text)
                             return;
 
-                Program.form1.listView4.Items.Add(lv);
-                Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                Program.Form1.listView4.Items.Add(lv);
+                Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                 getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, true));
             }
@@ -1658,19 +1658,10 @@ namespace Server
             lvwColumnSorter = new ListViewColumnSorter();
             listView1.ListViewItemSorter = lvwColumnSorter;
             Text = $"{Settings.Version}";
-#if DEBUG
-            Settings.ServerCertificate = new X509Certificate2(Convert.FromBase64String(
-                "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"));
-            var listener = new Listener();
-            var thread = new Thread(listener.Connect);
-            thread.IsBackground = true;
-            thread.Start(8848);
-#else
             using (FormPorts portsFrm = new FormPorts())
             {
                 portsFrm.ShowDialog();
             }
-#endif
 
 
             await Methods.FadeIn(this, 5);
@@ -1922,8 +1913,8 @@ namespace Server
                             if (item.Text == lv.Text)
                                 return;
 
-                    Program.form1.listView4.Items.Add(lv);
-                    Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                    Program.Form1.listView4.Items.Add(lv);
+                    Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                     getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, false));
                 }
@@ -1968,8 +1959,8 @@ namespace Server
                             if (item.Text == lv.Text)
                                 return;
 
-                    Program.form1.listView4.Items.Add(lv);
-                    Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                    Program.Form1.listView4.Items.Add(lv);
+                    Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                     getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, false));
                 }
@@ -2012,8 +2003,8 @@ namespace Server
                             if (item.Text == lv.Text)
                                 return;
 
-                    Program.form1.listView4.Items.Add(lv);
-                    Program.form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                    Program.Form1.listView4.Items.Add(lv);
+                    Program.Form1.listView4.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                     getTasks.Add(new AsyncTask(msgpack.Encode2Bytes(), lv.ToolTipText, false));
                 }
@@ -2026,7 +2017,7 @@ namespace Server
 
         private bool GetListview(string id)
         {
-            foreach (ListViewItem item in Program.form1.listView4.Items)
+            foreach (ListViewItem item in Program.Form1.listView4.Items)
                 if (item.ToolTipText == id)
                     return true;
             return false;
@@ -2034,7 +2025,7 @@ namespace Server
 
         private void SetExecution(string id)
         {
-            foreach (ListViewItem item in Program.form1.listView4.Items)
+            foreach (ListViewItem item in Program.Form1.listView4.Items)
                 if (item.ToolTipText == id)
                 {
                     var count = Convert.ToInt32(item.SubItems[1].Text);

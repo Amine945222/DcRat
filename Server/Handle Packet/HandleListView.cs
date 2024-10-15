@@ -71,7 +71,7 @@ namespace Server.Handle_Packet
                     }
                     else
                     {
-                        ipinf = Program.form1.cGeoMain
+                        ipinf = Program.Form1.cGeoMain
                             .GetIpInf(client.TcpClient.RemoteEndPoint.ToString().Split(':')[0]).Split(':');
                         client.LV.SubItems.Add(ipinf[1]);
                     }
@@ -114,20 +114,20 @@ namespace Server.Handle_Packet
                 client.ID = unpack_msgpack.ForcePathObject("HWID").AsString;
                 client.LV.UseItemStyleForSubItems = false;
                 client.LastPing = DateTime.Now;
-                Program.form1.Invoke((MethodInvoker)(() =>
+                Program.Form1.Invoke((MethodInvoker)(() =>
                 {
                     lock (Settings.LockListviewClients)
                     {
-                        Program.form1.listView1.Items.Add(client.LV);
-                        Program.form1.listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
-                        Program.form1.lv_act.Width = 500;
+                        Program.Form1.listView1.Items.Add(client.LV);
+                        Program.Form1.listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+                        Program.Form1.lv_act.Width = 500;
                     }
 
                     if (Properties.Settings.Default.Notification)
                     {
-                        Program.form1.notifyIcon1.BalloonTipText = $@"Connected 
+                        Program.Form1.notifyIcon1.BalloonTipText = $@"Connected 
 {client.Ip} : {client.TcpClient.LocalEndPoint.ToString().Split(':')[1]}";
-                        Program.form1.notifyIcon1.ShowBalloonTip(100);
+                        Program.Form1.notifyIcon1.ShowBalloonTip(100);
                         if (Properties.Settings.Default.DingDing && Properties.Settings.Default.WebHook != null &&
                             Properties.Settings.Default.Secret != null)
                             try

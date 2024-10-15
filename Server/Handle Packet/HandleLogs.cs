@@ -15,18 +15,18 @@ namespace Server.Handle_Packet
                 LV.SubItems.Add(Msg);
                 LV.ForeColor = color;
 
-                if (Program.form1.InvokeRequired)
-                    Program.form1.Invoke((MethodInvoker)(() =>
+                if (Program.Form1.InvokeRequired)
+                    Program.Form1.Invoke((MethodInvoker)(() =>
                     {
                         lock (Settings.LockListviewLogs)
                         {
-                            Program.form1.listView2.Items.Insert(0, LV);
+                            Program.Form1.listView2.Items.Insert(0, LV);
                         }
                     }));
                 else
                     lock (Settings.LockListviewLogs)
                     {
-                        Program.form1.listView2.Items.Insert(0, LV);
+                        Program.Form1.listView2.Items.Insert(0, LV);
                     }
             }
             catch

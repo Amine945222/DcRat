@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Windows.Forms;
+using Server.Forms;
 
 namespace Server
 {
     internal static class Program
     {
-        public static Form1 form1;
+        public static Form1 Form1;
 
         /*
          *                         _                  _
@@ -23,8 +24,8 @@ namespace Server
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            form1 = new Form1();
-            Application.Run(form1);
+            Form1 = new Form1();
+            Application.Run(Form1);
         }
     }
 }

@@ -59,7 +59,7 @@ namespace Server.Forms
                                 Path.GetFileName(Settings.CertificatePath));
                         }
 
-                        Program.form1.listView1.BeginInvoke((MethodInvoker)(() =>
+                        Program.Form1.listView1.BeginInvoke((MethodInvoker)(() =>
                         {
                             MessageBox.Show(this, @"Remember to save the BackupCertificate.zip", "Certificate",
                                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -68,7 +68,7 @@ namespace Server.Forms
                     }
                     catch (Exception ex)
                     {
-                        Program.form1.listView1.BeginInvoke((MethodInvoker)(() =>
+                        Program.Form1.listView1.BeginInvoke((MethodInvoker)(() =>
                         {
                             MessageBox.Show(this, ex.Message, "Certificate", MessageBoxButtons.OK,
                                 MessageBoxIcon.Exclamation);

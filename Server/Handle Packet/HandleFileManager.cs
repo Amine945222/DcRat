@@ -255,7 +255,7 @@ namespace Server.Handle_Packet
                     lv.ToolTipText = _files[i + 1];
                     var im = Image.FromStream(new MemoryStream(Convert.FromBase64String(_files[i + 2])));
 
-                    Program.form1.Invoke((MethodInvoker)(() => { imageList1.Images.Add(_files[i + 1], im); }));
+                    Program.Form1.Invoke((MethodInvoker)(() => { imageList1.Images.Add(_files[i + 1], im); }));
                     lv.ImageKey = _files[i + 1];
                     lv.Group = listViewGroup;
                     lv.SubItems.Add(Methods.BytesToString(Convert.ToInt64(_files[i + 3])));

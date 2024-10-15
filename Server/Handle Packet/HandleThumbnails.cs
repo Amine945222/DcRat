@@ -22,11 +22,11 @@ namespace Server.Handle_Packet
 
                     using (var memoryStream = new MemoryStream(unpack_msgpack.ForcePathObject("Image").GetAsBytes()))
                     {
-                        Program.form1.ThumbnailImageList.Images.Add(client.ID, Image.FromStream(memoryStream));
+                        Program.Form1.ThumbnailImageList.Images.Add(client.ID, Image.FromStream(memoryStream));
                         client.LV2.ImageKey = client.ID;
                         lock (Settings.LockListviewThumb)
                         {
-                            Program.form1.listView3.Items.Add(client.LV2);
+                            Program.Form1.listView3.Items.Add(client.LV2);
                         }
                     }
                 }
@@ -36,8 +36,8 @@ namespace Server.Handle_Packet
                     {
                         lock (Settings.LockListviewThumb)
                         {
-                            Program.form1.ThumbnailImageList.Images.RemoveByKey(client.ID);
-                            Program.form1.ThumbnailImageList.Images.Add(client.ID, Image.FromStream(memoryStream));
+                            Program.Form1.ThumbnailImageList.Images.RemoveByKey(client.ID);
+                            Program.Form1.ThumbnailImageList.Images.Add(client.ID, Image.FromStream(memoryStream));
                         }
                     }
                 }
