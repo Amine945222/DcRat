@@ -1,49 +1,43 @@
-using System;
-using System.Diagnostics;
-
-using i64 = System.Int64;
-
 namespace CS_SQLite3
 {
-  public partial class CSSQLite
-  {
-    /*
-    ** 2001 September 15
-    **
-    ** The author disclaims copyright to this source code.  In place of
-    ** a legal notice, here is a blessing:
-    **
-    **    May you do good and not evil.
-    **    May you find forgiveness for yourself and forgive others.
-    **    May you share freely, never taking more than you give.
-    **
-    *************************************************************************
-    ** This file contains the sqlite3_get_table() and //sqlite3_free_table()
-    ** interface routines.  These are just wrappers around the main
-    ** interface routine of sqlite3_exec().
-    **
-    ** These routines are in a separate files so that they will not be linked
-    ** if they are not used.
-    **
-    ** $Id: table.c,v 1.39 2009/01/19 20:49:10 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    */
-    //#include "sqliteInt.h"
-    //#include <stdlib.h>
-    //#include <string.h>
+    public partial class CSSQLite
+    {
+        /*
+         ** 2001 September 15
+         **
+         ** The author disclaims copyright to this source code.  In place of
+         ** a legal notice, here is a blessing:
+         **
+         **    May you do good and not evil.
+         **    May you find forgiveness for yourself and forgive others.
+         **    May you share freely, never taking more than you give.
+         **
+         *************************************************************************
+         ** This file contains the sqlite3_get_table() and //sqlite3_free_table()
+         ** interface routines.  These are just wrappers around the main
+         ** interface routine of sqlite3_exec().
+         **
+         ** These routines are in a separate files so that they will not be linked
+         ** if they are not used.
+         **
+         ** $Id: table.c,v 1.39 2009/01/19 20:49:10 drh Exp $
+         **
+         *************************************************************************
+         **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+         **  C#-SQLite is an independent reimplementation of the SQLite software library
+         **
+         **  $Header$
+         *************************************************************************
+         */
+        //#include "sqliteInt.h"
+        //#include <stdlib.h>
+        //#include <string.h>
 
 #if !SQLITE_OMIT_GET_TABLE
-
 /*
-** This structure is used to pass data from sqlite3_get_table() through
-** to the callback function is uses to build the result.
-*/
+ ** This structure is used to pass data from sqlite3_get_table() through
+ ** to the callback function is uses to build the result.
+ */
 class TabResult {
 public string[] azResult;
 public string zErrMsg;
@@ -56,10 +50,10 @@ public int rc;
 };
 
 /*
-** This routine is called once for each row in the result table.  Its job
-** is to fill in the TabResult structure appropriately, allocating new
-** memory as necessary.
-*/
+ ** This routine is called once for each row in the result table.  Its job
+ ** is to fill in the TabResult structure appropriately, allocating new
+ ** memory as necessary.
+ */
 public static int sqlite3_get_table_cb( object pArg, i64 nCol, object Oargv, object Ocolv )
 {
 string[] argv = (string[])Oargv;
@@ -70,8 +64,8 @@ int i;
 string z;
 
 /* Make sure there is enough space in p.azResult to hold everything
-** we need to remember from this invocation of the callback.
-*/
+ ** we need to remember from this invocation of the callback.
+ */
 if( p.nRow==0 && argv!=null ){
 need = (int)nCol*2;
 }else{
@@ -86,11 +80,11 @@ p.azResult = azNew;
 }
 
 /* If this is the first row, then generate an extra row containing
-** the names of all columns.
-*/
+ ** the names of all columns.
+ */
 if( p.nRow==0 ){
 p.nColumn = (int)nCol;
-for(i=0; i<nCol; i++){
+for(i = 0; i<nCol; i++){
 z = sqlite3_mprintf("%s", colv[i]);
 if( z==null ) goto malloc_failed;
 p.azResult[p.nData++ -1] = z;
@@ -107,14 +101,14 @@ return 1;
 /* Copy over the row data
 */
 if( argv!=null ){
-for(i=0; i<nCol; i++){
+for(i = 0; i<nCol; i++){
 if( argv[i]==null ){
 z = null;
 }else{
 int n = sqlite3Strlen30(argv[i])+1;
 //z = sqlite3_malloc( n );
 //if( z==0 ) goto malloc_failed;
-z= argv[i];//memcpy(z, argv[i], n);
+z = argv[i];//memcpy(z, argv[i], n);
 }
 p.azResult[p.nData++ -1] = z;
 }
@@ -128,15 +122,15 @@ return 1;
 }
 
 /*
-** Query the database.  But instead of invoking a callback for each row,
-** malloc() for space to hold the result and return the entire results
-** at the conclusion of the call.
-**
-** The result that is written to ***pazResult is held in memory obtained
-** from malloc().  But the caller cannot free this memory directly.
-** Instead, the entire table should be passed to //sqlite3_free_table() when
-** the calling procedure is finished using it.
-*/
+ ** Query the database.  But instead of invoking a callback for each row,
+ ** malloc() for space to hold the result and return the entire results
+ ** at the conclusion of the call.
+ **
+ ** The result that is written to ***pazResult is held in memory obtained
+ ** from malloc().  But the caller cannot free this memory directly.
+ ** Instead, the entire table should be passed to //sqlite3_free_table() when
+ ** the calling procedure is finished using it.
+ */
 public static int sqlite3_get_table(
 sqlite3 db,               /* The database on which the SQL executes */
 string zSql,              /* The SQL to be executed */
@@ -203,8 +197,8 @@ return rc;
 }
 
 /*
-** This routine frees the space the sqlite3_get_table() malloced.
-*/
+ ** This routine frees the space the sqlite3_get_table() malloced.
+ */
 static void //sqlite3_free_table(
 ref string azResult            /* Result returned from from sqlite3_get_table() */
 ){
@@ -219,5 +213,5 @@ int i, n;
 }
 
 #endif //* SQLITE_OMIT_GET_TABLE */
-  }
+    }
 }

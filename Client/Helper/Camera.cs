@@ -1,31 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
-using System.Drawing;
 
 namespace Client.Helper
 {
-    class Camera
+    internal class Camera
     {
-        public static bool havecamera()
-        {
-            string[] devices = FindDevices();
-            if (devices.Length == 0)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
         public static readonly Guid CLSID_VideoInputDeviceCategory = new Guid("{860BB310-5D01-11d0-BD3B-00A0C911CE86}");
         public static readonly Guid CLSID_SystemDeviceEnum = new Guid("{62BE5D10-60EB-11d0-BD3B-00A0C911CE86}");
         public static readonly Guid IID_IPropertyBag = new Guid("{55272A00-42CB-11CE-8135-00AA004BB851}");
+
+        public static bool havecamera()
+        {
+            var devices = FindDevices();
+            if (devices.Length == 0)
+                return false;
+            return true;
+        }
+
         public static string[] FindDevices()
         {
             return GetFiltes(CLSID_VideoInputDeviceCategory).ToArray();
@@ -64,13 +57,13 @@ namespace Client.Helper
                 {
                     var moniker = monikers[0];
                     object value = null;
-                    Guid guid = IID_IPropertyBag;
+                    var guid = IID_IPropertyBag;
                     moniker.BindToStorage(null, null, ref guid, out value);
                     var prop = (IPropertyBag)value;
                     try
                     {
                         var rc = func(moniker, prop);
-                        if (rc == true) break;
+                        if (rc) break;
                     }
                     finally
                     {
@@ -85,13 +78,20 @@ namespace Client.Helper
                 if (device != null) Marshal.ReleaseComObject(device);
             }
         }
-        [ComVisible(true), ComImport(), Guid("29840822-5B84-11D0-BD3B-00A0C911CE86"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+
+        [ComVisible(true)]
+        [ComImport]
+        [Guid("29840822-5B84-11D0-BD3B-00A0C911CE86")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         public interface ICreateDevEnum
         {
-            int CreateClassEnumerator([In] ref Guid pType, [In, Out] ref IEnumMoniker ppEnumMoniker, [In] int dwFlags);
+            int CreateClassEnumerator([In] ref Guid pType, [In] [Out] ref IEnumMoniker ppEnumMoniker, [In] int dwFlags);
         }
 
-        [ComVisible(true), ComImport(), Guid("55272A00-42CB-11CE-8135-00AA004BB851"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [ComVisible(true)]
+        [ComImport]
+        [Guid("55272A00-42CB-11CE-8135-00AA004BB851")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         public interface IPropertyBag
         {
             int Read([MarshalAs(UnmanagedType.LPWStr)] string PropName, ref object Var, int ErrorLog);

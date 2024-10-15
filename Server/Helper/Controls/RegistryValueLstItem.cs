@@ -5,50 +5,54 @@ namespace Server.Helper
 {
     public class RegistryValueLstItem : ListViewItem
     {
-        private string _type { get; set; }
-        private string _data { get; set; }
-
-        public string RegName {
-            get { return this.Name; }
-            set 
-            { 
-                this.Name = value;
-                this.Text = RegValueHelper.GetName(value);
-            }
-        }
-        public string Type {
-            get { return _type; }
-            set
-            {
-                _type = value;
-
-                if (this.SubItems.Count < 2)
-                    this.SubItems.Add(_type);
-                else
-                    this.SubItems[1].Text = _type;
-
-                this.ImageIndex = GetRegistryValueImgIndex(_type);
-            }
-        }
-
-        public string Data {
-            get { return _data; }
-            set
-            {
-                _data = value;
-
-                if (this.SubItems.Count < 3)
-                    this.SubItems.Add(_data);
-                else 
-                    this.SubItems[2].Text = _data;
-            }
-        }
-
         public RegistryValueLstItem(RegValueData value)
         {
             RegName = value.Name;
             Type = value.Kind.RegistryTypeToString();
             Data = RegValueHelper.RegistryValueToString(value);
+        }
+
+        private string _type { get; set; }
+        private string _data { get; set; }
+
+        public string RegName
+        {
+            get => Name;
+            set
+            {
+                Name = value;
+                Text = RegValueHelper.GetName(value);
+            }
+        }
+
+        public string Type
+        {
+            get => _type;
+            set
+            {
+                _type = value;
+
+                if (SubItems.Count < 2)
+                    SubItems.Add(_type);
+                else
+                    SubItems[1].Text = _type;
+
+                ImageIndex = GetRegistryValueImgIndex(_type);
+            }
+        }
+
+        public string Data
+        {
+            get => _data;
+            set
+            {
+                _data = value;
+
+                if (SubItems.Count < 3)
+                    SubItems.Add(_data);
+                else
+                    SubItems[2].Text = _data;
+            }
         }
 
         private int GetRegistryValueImgIndex(string type)

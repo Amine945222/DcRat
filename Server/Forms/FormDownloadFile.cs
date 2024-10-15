@@ -1,50 +1,45 @@
-﻿using Server.Connection;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using System;
+using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Threading;
 using System.IO;
 using System.Net.Sockets;
-using Timer = System.Threading.Timer;
+using System.Windows.Forms;
+using Server.Connection;
 using Server.Helper;
-using Server.Algorithm;
-using System.Diagnostics;
 
 namespace Server.Forms
 {
     public partial class FormDownloadFile : Form
     {
-        public Form1 F { get; set; }
-        internal Clients Client { get; set; }
-        public long FileSize = 0;
-        private long BytesSent = 0;
-        public string FullFileName;
+        private long BytesSent;
         public string ClientFullFileName;
-        private bool IsUpload = false;
         public string DirPath;
+        public long FileSize = 0;
+        public string FullFileName;
+        private bool IsUpload;
+
         public FormDownloadFile()
         {
             InitializeComponent();
         }
+
+        public Form1 F { get; set; }
+        internal Clients Client { get; set; }
+
         private void timer1_Tick(object sender, EventArgs e)
         {
             if (FileSize >= 2147483647)
             {
                 timer1.Stop();
                 MessageBox.Show("Don't support files larger than 2GB.");
-                this.Dispose();
+                Dispose();
             }
-            else 
+            else
             {
                 if (!IsUpload)
                 {
-                    labelsize.Text = $"{Methods.BytesToString(FileSize)} \\ {Methods.BytesToString(Client.BytesRecevied)}";
+                    labelsize.Text =
+                        $"{Methods.BytesToString(FileSize)} \\ {Methods.BytesToString(Client.BytesRecevied)}";
                     if (Client.BytesRecevied >= FileSize)
                     {
                         labelsize.Text = "Downloaded";
@@ -62,7 +57,7 @@ namespace Server.Forms
                         timer1.Stop();
                     }
                 }
-            }            
+            }
         }
 
         private void SocketDownload_FormClosed(object sender, FormClosedEventArgs e)
@@ -72,7 +67,9 @@ namespace Server.Forms
                 Client?.Disconnected();
                 timer1?.Dispose();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         public void Send(object obj)
@@ -82,17 +79,17 @@ namespace Server.Forms
                 try
                 {
                     IsUpload = true;
-                    byte[] msg = (byte[])obj;
-                    byte[] buffersize = BitConverter.GetBytes(msg.Length);
+                    var msg = (byte[])obj;
+                    var buffersize = BitConverter.GetBytes(msg.Length);
                     Client.TcpClient.Poll(-1, SelectMode.SelectWrite);
                     Client.SslClient.Write(buffersize, 0, buffersize.Length);
 
                     Debug.WriteLine("send chunks");
-                    using (MemoryStream memoryStream = new MemoryStream(msg))
+                    using (var memoryStream = new MemoryStream(msg))
                     {
-                        int read = 0;
+                        var read = 0;
                         memoryStream.Position = 0;
-                        byte[] chunk = new byte[50 * 1000];
+                        var chunk = new byte[50 * 1000];
                         while ((read = memoryStream.Read(chunk, 0, chunk.Length)) > 0)
                         {
                             Client.TcpClient.Poll(-1, SelectMode.SelectWrite);
@@ -101,10 +98,7 @@ namespace Server.Forms
                         }
                     }
 
-                    Program.form1.BeginInvoke((MethodInvoker)(() =>
-                    {
-                        this.Close();
-                    }));
+                    Program.form1.BeginInvoke((MethodInvoker)(() => { Close(); }));
                 }
                 catch
                 {

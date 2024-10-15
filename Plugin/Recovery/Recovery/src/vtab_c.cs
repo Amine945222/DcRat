@@ -1,41 +1,37 @@
-using System;
-using System.Diagnostics;
-using System.Text;
-
 namespace CS_SQLite3
 {
-  public partial class CSSQLite
-  {
-    /*
-    ** 2006 June 10
-    **
-    ** The author disclaims copyright to this source code.  In place of
-    ** a legal notice, here is a blessing:
-    **
-    **    May you do good and not evil.
-    **    May you find forgiveness for yourself and forgive others.
-    **    May you share freely, never taking more than you give.
-    **
-    *************************************************************************
-    ** This file contains code used to help implement virtual tables.
-    **
-    ** $Id: vtab.c,v 1.94 2009/08/08 18:01:08 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    */
+    public partial class CSSQLite
+    {
+        /*
+         ** 2006 June 10
+         **
+         ** The author disclaims copyright to this source code.  In place of
+         ** a legal notice, here is a blessing:
+         **
+         **    May you do good and not evil.
+         **    May you find forgiveness for yourself and forgive others.
+         **    May you share freely, never taking more than you give.
+         **
+         *************************************************************************
+         ** This file contains code used to help implement virtual tables.
+         **
+         ** $Id: vtab.c,v 1.94 2009/08/08 18:01:08 drh Exp $
+         **
+         *************************************************************************
+         **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+         **  C#-SQLite is an independent reimplementation of the SQLite software library
+         **
+         **  $Header$
+         *************************************************************************
+         */
 #if !SQLITE_OMIT_VIRTUALTABLE
 //#include "sqliteInt.h"
 
 /*
-** The actual function that does the work of creating a new module.
-** This function implements the sqlite3_create_module() and
-** sqlite3_create_module_v2() interfaces.
-*/
+ ** The actual function that does the work of creating a new module.
+ ** This function implements the sqlite3_create_module() and
+ ** sqlite3_create_module_v2() interfaces.
+ */
 static int createModule(
   sqlite3 *db,                    /* Database in which module is registered */
   const char *zName,              /* Name assigned to this module */
@@ -76,8 +72,8 @@ static int createModule(
 
 
 /*
-** External API function used to create a new virtual-table module.
-*/
+ ** External API function used to create a new virtual-table module.
+ */
 int sqlite3_create_module(
   sqlite3 *db,                    /* Database in which module is registered */
   const char *zName,              /* Name assigned to this module */
@@ -88,8 +84,8 @@ int sqlite3_create_module(
 }
 
 /*
-** External API function used to create a new virtual-table module.
-*/
+ ** External API function used to create a new virtual-table module.
+ */
 int sqlite3_create_module_v2(
   sqlite3 *db,                    /* Database in which module is registered */
   const char *zName,              /* Name assigned to this module */
@@ -101,34 +97,34 @@ int sqlite3_create_module_v2(
 }
 
 /*
-** Lock the virtual table so that it cannot be disconnected.
-** Locks nest.  Every lock should have a corresponding unlock.
-** If an unlock is omitted, resources leaks will occur.  
-**
-** If a disconnect is attempted while a virtual table is locked,
-** the disconnect is deferred until all locks have been removed.
-*/
+ ** Lock the virtual table so that it cannot be disconnected.
+ ** Locks nest.  Every lock should have a corresponding unlock.
+ ** If an unlock is omitted, resources leaks will occur.
+ **
+ ** If a disconnect is attempted while a virtual table is locked,
+ ** the disconnect is deferred until all locks have been removed.
+ */
 void sqlite3VtabLock(VTable *pVTab){
   pVTab->nRef++;
 }
 
 
 /*
-** pTab is a pointer to a Table structure representing a virtual-table.
-** Return a pointer to the VTable object used by connection db to access 
-** this virtual-table, if one has been created, or NULL otherwise.
-*/
+ ** pTab is a pointer to a Table structure representing a virtual-table.
+ ** Return a pointer to the VTable object used by connection db to access
+ ** this virtual-table, if one has been created, or NULL otherwise.
+ */
 VTable *sqlite3GetVTable(sqlite3 *db, Table *pTab){
   VTable *pVtab;
   assert( IsVirtual(pTab) );
-  for(pVtab=pTab->pVTable; pVtab && pVtab->db!=db; pVtab=pVtab->pNext);
+  for(pVtab = pTab->pVTable; pVtab && pVtab->db!=db; pVtab = pVtab->pNext);
   return pVtab;
 }
 
 /*
-** Decrement the ref-count on a virtual table object. When the ref-count
-** reaches zero, call the xDisconnect() method to delete the object.
-*/
+ ** Decrement the ref-count on a virtual table object. When the ref-count
+ ** reaches zero, call the xDisconnect() method to delete the object.
+ */
 void sqlite3VtabUnlock(VTable *pVTab){
   sqlite3 *db = pVTab->db;
 
@@ -156,12 +152,12 @@ void sqlite3VtabUnlock(VTable *pVTab){
 }
 
 /*
-** Table p is a virtual table. This function moves all elements in the
-** p->pVTable list to the sqlite3.pDisconnect lists of their associated
-** database connections to be disconnected at the next opportunity. 
-** Except, if argument db is not NULL, then the entry associated with
-** connection db is left in the p->pVTable list.
-*/
+ ** Table p is a virtual table. This function moves all elements in the
+ ** p->pVTable list to the sqlite3.pDisconnect lists of their associated
+ ** database connections to be disconnected at the next opportunity.
+ ** Except, if argument db is not NULL, then the entry associated with
+ ** connection db is left in the p->pVTable list.
+ */
 static VTable *vtabDisconnectAll(sqlite3 *db, Table *p){
   VTable *pRet = 0;
   VTable *pVTable = p->pVTable;
@@ -197,25 +193,25 @@ static VTable *vtabDisconnectAll(sqlite3 *db, Table *p){
 
 
 /*
-** Disconnect all the virtual table objects in the sqlite3.pDisconnect list.
-**
-** This function may only be called when the mutexes associated with all
-** shared b-tree databases opened using connection db are held by the 
-** caller. This is done to protect the sqlite3.pDisconnect list. The
-** sqlite3.pDisconnect list is accessed only as follows:
-**
-**   1) By this function. In this case, all BtShared mutexes and the mutex
-**      associated with the database handle itself must be held.
-**
-**   2) By function vtabDisconnectAll(), when it adds a VTable entry to
-**      the sqlite3.pDisconnect list. In this case either the BtShared mutex
-**      associated with the database the virtual table is stored in is held
-**      or, if the virtual table is stored in a non-sharable database, then
-**      the database handle mutex is held.
-**
-** As a result, a sqlite3.pDisconnect cannot be accessed simultaneously 
-** by multiple threads. It is thread-safe.
-*/
+ ** Disconnect all the virtual table objects in the sqlite3.pDisconnect list.
+ **
+ ** This function may only be called when the mutexes associated with all
+ ** shared b-tree databases opened using connection db are held by the
+ ** caller. This is done to protect the sqlite3.pDisconnect list. The
+ ** sqlite3.pDisconnect list is accessed only as follows:
+ **
+ **   1) By this function. In this case, all BtShared mutexes and the mutex
+ **      associated with the database handle itself must be held.
+ **
+ **   2) By function vtabDisconnectAll(), when it adds a VTable entry to
+ **      the sqlite3.pDisconnect list. In this case either the BtShared mutex
+ **      associated with the database the virtual table is stored in is held
+ **      or, if the virtual table is stored in a non-sharable database, then
+ **      the database handle mutex is held.
+ **
+ ** As a result, a sqlite3.pDisconnect cannot be accessed simultaneously
+ ** by multiple threads. It is thread-safe.
+ */
 void sqlite3VtabUnlockList(sqlite3 *db){
   VTable *p = db->pDisconnect;
   db->pDisconnect = 0;
@@ -234,24 +230,24 @@ void sqlite3VtabUnlockList(sqlite3 *db){
 }
 
 /*
-** Clear any and all virtual-table information from the Table record.
-** This routine is called, for example, just before deleting the Table
-** record.
-**
-** Since it is a virtual-table, the Table structure contains a pointer
-** to the head of a linked list of VTable structures. Each VTable 
-** structure is associated with a single sqlite3* user of the schema.
-** The reference count of the VTable structure associated with database 
-** connection db is decremented immediately (which may lead to the 
-** structure being xDisconnected and free). Any other VTable structures
-** in the list are moved to the sqlite3.pDisconnect list of the associated 
-** database connection.
-*/
+ ** Clear any and all virtual-table information from the Table record.
+ ** This routine is called, for example, just before deleting the Table
+ ** record.
+ **
+ ** Since it is a virtual-table, the Table structure contains a pointer
+ ** to the head of a linked list of VTable structures. Each VTable
+ ** structure is associated with a single sqlite3* user of the schema.
+ ** The reference count of the VTable structure associated with database
+ ** connection db is decremented immediately (which may lead to the
+ ** structure being xDisconnected and free). Any other VTable structures
+ ** in the list are moved to the sqlite3.pDisconnect list of the associated
+ ** database connection.
+ */
 void sqlite3VtabClear(Table *p){
   vtabDisconnectAll(0, p);
   if( p->azModuleArg ){
     int i;
-    for(i=0; i<p->nModuleArg; i++){
+    for(i = 0; i<p->nModuleArg; i++){
       sqlite3DbFree(p->dbMem, p->azModuleArg[i]);
     }
     sqlite3DbFree(p->dbMem, p->azModuleArg);
@@ -259,11 +255,11 @@ void sqlite3VtabClear(Table *p){
 }
 
 /*
-** Add a new module argument to pTable->azModuleArg[].
-** The string is not copied - the pointer is stored.  The
-** string will be freed automatically when the table is
-** deleted.
-*/
+ ** Add a new module argument to pTable->azModuleArg[].
+ ** The string is not copied - the pointer is stored.  The
+ ** string will be freed automatically when the table is
+ ** deleted.
+ */
 static void addModuleArgument(sqlite3 *db, Table *pTable, char *zArg){
   int i = pTable->nModuleArg++;
   int nBytes = sizeof(char *)*(1+pTable->nModuleArg);
@@ -271,7 +267,7 @@ static void addModuleArgument(sqlite3 *db, Table *pTable, char *zArg){
   azModuleArg = sqlite3DbRealloc(db, pTable->azModuleArg, nBytes);
   if( azModuleArg==0 ){
     int j;
-    for(j=0; j<i; j++){
+    for(j = 0; j<i; j++){
       sqlite3DbFree(db, pTable->azModuleArg[j]);
     }
     sqlite3DbFree(db, zArg);
@@ -285,10 +281,10 @@ static void addModuleArgument(sqlite3 *db, Table *pTable, char *zArg){
 }
 
 /*
-** The parser calls this routine when it first sees a CREATE VIRTUAL TABLE
-** statement.  The module name has been parsed, but the optional list
-** of parameters that follow the module name are still pending.
-*/
+ ** The parser calls this routine when it first sees a CREATE VIRTUAL TABLE
+ ** statement.  The module name has been parsed, but the optional list
+ ** of parameters that follow the module name are still pending.
+ */
 void sqlite3VtabBeginParse(
   Parse *pParse,        /* Parsing context */
   Token *pName1,        /* Name of new table, or database name */
@@ -329,10 +325,10 @@ void sqlite3VtabBeginParse(
 }
 
 /*
-** This routine takes the module argument that has been accumulating
-** in pParse->zArg[] and appends it to the list of arguments on the
-** virtual table currently under construction in pParse->pTable.
-*/
+ ** This routine takes the module argument that has been accumulating
+ ** in pParse->zArg[] and appends it to the list of arguments on the
+ ** virtual table currently under construction in pParse->pTable.
+ */
 static void addArgumentToVtab(Parse *pParse){
   if( pParse->sArg.z && ALWAYS(pParse->pNewTable) ){
     const char *z = (const char*)pParse->sArg.z;
@@ -343,9 +339,9 @@ static void addArgumentToVtab(Parse *pParse){
 }
 
 /*
-** The parser calls this routine after the CREATE VIRTUAL TABLE statement
-** has been completely parsed.
-*/
+ ** The parser calls this routine after the CREATE VIRTUAL TABLE statement
+ ** has been completely parsed.
+ */
 void sqlite3VtabFinishParse(Parse *pParse, Token *pEnd){
   Table *pTab = pParse->pNewTable;  /* The table being constructed */
   sqlite3 *db = pParse->db;         /* The database connection */
@@ -425,9 +421,9 @@ void sqlite3VtabFinishParse(Parse *pParse, Token *pEnd){
 }
 
 /*
-** The parser calls this routine when it sees the first token
-** of an argument to the module name in a CREATE VIRTUAL TABLE statement.
-*/
+ ** The parser calls this routine when it sees the first token
+ ** of an argument to the module name in a CREATE VIRTUAL TABLE statement.
+ */
 void sqlite3VtabArgInit(Parse *pParse){
   addArgumentToVtab(pParse);
   pParse->sArg.z = 0;
@@ -435,9 +431,9 @@ void sqlite3VtabArgInit(Parse *pParse){
 }
 
 /*
-** The parser calls this routine for each token after the first token
-** in an argument to the module name in a CREATE VIRTUAL TABLE statement.
-*/
+ ** The parser calls this routine for each token after the first token
+ ** in an argument to the module name in a CREATE VIRTUAL TABLE statement.
+ */
 void sqlite3VtabArgExtend(Parse *pParse, Token *p){
   Token *pArg = &pParse->sArg;
   if( pArg->z==0 ){
@@ -450,10 +446,10 @@ void sqlite3VtabArgExtend(Parse *pParse, Token *p){
 }
 
 /*
-** Invoke a virtual table constructor (either xCreate or xConnect). The
-** pointer to the function to invoke is passed as the fourth parameter
-** to this procedure.
-*/
+ ** Invoke a virtual table constructor (either xCreate or xConnect). The
+ ** pointer to the function to invoke is passed as the fourth parameter
+ ** to this procedure.
+ */
 static int vtabCallConstructor(
   sqlite3 *db, 
   Table *pTab,
@@ -518,14 +514,14 @@ static int vtabCallConstructor(
       pVTable->pNext = pTab->pVTable;
       pTab->pVTable = pVTable;
 
-      for(iCol=0; iCol<pTab->nCol; iCol++){
+      for(iCol = 0; iCol<pTab->nCol; iCol++){
         char *zType = pTab->aCol[iCol].zType;
         int nType;
         int i = 0;
         if( !zType ) continue;
         nType = sqlite3Strlen30(zType);
         if( sqlite3StrNICmp("hidden", zType, 6)||(zType[6] && zType[6]!=' ') ){
-          for(i=0; i<nType; i++){
+          for(i = 0; i<nType; i++){
             if( (0==sqlite3StrNICmp(" hidden", &zType[i], 7))
              && (zType[i+7]=='\0' || zType[i+7]==' ')
             ){
@@ -537,7 +533,7 @@ static int vtabCallConstructor(
         if( i<nType ){
           int j;
           int nDel = 6 + (zType[i+6] ? 1 : 0);
-          for(j=i; (j+nDel)<=nType; j++){
+          for(j = i; (j+nDel)<=nType; j++){
             zType[j] = zType[j+nDel];
           }
           if( zType[i]=='\0' && i>0 ){
@@ -556,12 +552,12 @@ static int vtabCallConstructor(
 }
 
 /*
-** This function is invoked by the parser to call the xConnect() method
-** of the virtual table pTab. If an error occurs, an error code is returned 
-** and an error left in pParse.
-**
-** This call is a no-op if table pTab is not a virtual table.
-*/
+ ** This function is invoked by the parser to call the xConnect() method
+ ** of the virtual table pTab. If an error occurs, an error code is returned
+ ** and an error left in pParse.
+ **
+ ** This call is a no-op if table pTab is not a virtual table.
+ */
 int sqlite3VtabCallConnect(Parse *pParse, Table *pTab){
   sqlite3 *db = pParse->db;
   const char *zMod;
@@ -594,8 +590,8 @@ int sqlite3VtabCallConnect(Parse *pParse, Table *pTab){
 }
 
 /*
-** Add the virtual table pVTab to the array sqlite3.aVTrans[].
-*/
+ ** Add the virtual table pVTab to the array sqlite3.aVTrans[].
+ */
 static int addToVTrans(sqlite3 *db, VTable *pVTab){
   const int ARRAY_INCR = 5;
 
@@ -618,13 +614,13 @@ static int addToVTrans(sqlite3 *db, VTable *pVTab){
 }
 
 /*
-** This function is invoked by the vdbe to call the xCreate method
-** of the virtual table named zTab in database iDb. 
-**
-** If an error occurs, *pzErr is set to point an an English language
-** description of the error and an SQLITE_XXX error code is returned.
-** In this case the caller must call sqlite3DbFree(db, ) on *pzErr.
-*/
+ ** This function is invoked by the vdbe to call the xCreate method
+ ** of the virtual table named zTab in database iDb.
+ **
+ ** If an error occurs, *pzErr is set to point an an English language
+ ** description of the error and an SQLITE_XXX error code is returned.
+ ** In this case the caller must call sqlite3DbFree(db, ) on *pzErr.
+ */
 int sqlite3VtabCallCreate(sqlite3 *db, int iDb, const char *zTab, char **pzErr){
   int rc = SQLITE_OK;
   Table *pTab;
@@ -659,10 +655,10 @@ int sqlite3VtabCallCreate(sqlite3 *db, int iDb, const char *zTab, char **pzErr){
 }
 
 /*
-** This function is used to set the schema of a virtual table.  It is only
-** valid to call this function from within the xCreate() or xConnect() of a
-** virtual table module.
-*/
+ ** This function is used to set the schema of a virtual table.  It is only
+ ** valid to call this function from within the xCreate() or xConnect() of a
+ ** virtual table module.
+ */
 int sqlite3_declare_vtab(sqlite3 *db, const char *zCreateTable){
   Parse *pParse;
 
@@ -720,12 +716,12 @@ int sqlite3_declare_vtab(sqlite3 *db, const char *zCreateTable){
 }
 
 /*
-** This function is invoked by the vdbe to call the xDestroy method
-** of the virtual table named zTab in database iDb. This occurs
-** when a DROP TABLE is mentioned.
-**
-** This call is a no-op if zTab is not a virtual table.
-*/
+ ** This function is invoked by the vdbe to call the xDestroy method
+ ** of the virtual table named zTab in database iDb. This occurs
+ ** when a DROP TABLE is mentioned.
+ **
+ ** This call is a no-op if zTab is not a virtual table.
+ */
 int sqlite3VtabCallDestroy(sqlite3 *db, int iDb, const char *zTab){
   int rc = SQLITE_OK;
   Table *pTab;
@@ -752,17 +748,17 @@ int sqlite3VtabCallDestroy(sqlite3 *db, int iDb, const char *zTab){
 }
 
 /*
-** This function invokes either the xRollback or xCommit method
-** of each of the virtual tables in the sqlite3.aVTrans array. The method
-** called is identified by the second argument, "offset", which is
-** the offset of the method to call in the sqlite3_module structure.
-**
-** The array is cleared after invoking the callbacks. 
-*/
+ ** This function invokes either the xRollback or xCommit method
+ ** of each of the virtual tables in the sqlite3.aVTrans array. The method
+ ** called is identified by the second argument, "offset", which is
+ ** the offset of the method to call in the sqlite3_module structure.
+ **
+ ** The array is cleared after invoking the callbacks.
+ */
 static void callFinaliser(sqlite3 *db, int offset){
   int i;
   if( db->aVTrans ){
-    for(i=0; i<db->nVTrans; i++){
+    for(i = 0; i<db->nVTrans; i++){
       VTable *pVTab = db->aVTrans[i];
       sqlite3_vtab *p = pVTab->pVtab;
       if( p ){
@@ -779,13 +775,13 @@ static void callFinaliser(sqlite3 *db, int offset){
 }
 
 /*
-** Invoke the xSync method of all virtual tables in the sqlite3.aVTrans
-** array. Return the error code for the first error that occurs, or
-** SQLITE_OK if all xSync operations are successful.
-**
-** Set *pzErrmsg to point to a buffer that should be released using 
-** sqlite3DbFree() containing an error message, if one is available.
-*/
+ ** Invoke the xSync method of all virtual tables in the sqlite3.aVTrans
+ ** array. Return the error code for the first error that occurs, or
+ ** SQLITE_OK if all xSync operations are successful.
+ **
+ ** Set *pzErrmsg to point to a buffer that should be released using
+ ** sqlite3DbFree() containing an error message, if one is available.
+ */
 int sqlite3VtabSync(sqlite3 *db, char **pzErrmsg){
   int i;
   int rc = SQLITE_OK;
@@ -794,7 +790,7 @@ int sqlite3VtabSync(sqlite3 *db, char **pzErrmsg){
 
   rc = sqlite3SafetyOff(db);
   db->aVTrans = 0;
-  for(i=0; rc==SQLITE_OK && i<db->nVTrans; i++){
+  for(i = 0; rc==SQLITE_OK && i<db->nVTrans; i++){
     int (*x)(sqlite3_vtab *);
     sqlite3_vtab *pVtab = aVTrans[i]->pVtab;
     if( pVtab && (x = pVtab->pModule->xSync)!=0 ){
@@ -814,31 +810,31 @@ int sqlite3VtabSync(sqlite3 *db, char **pzErrmsg){
 }
 
 /*
-** Invoke the xRollback method of all virtual tables in the 
-** sqlite3.aVTrans array. Then clear the array itself.
-*/
+ ** Invoke the xRollback method of all virtual tables in the
+ ** sqlite3.aVTrans array. Then clear the array itself.
+ */
 int sqlite3VtabRollback(sqlite3 *db){
   callFinaliser(db, offsetof(sqlite3_module,xRollback));
   return SQLITE_OK;
 }
 
 /*
-** Invoke the xCommit method of all virtual tables in the 
-** sqlite3.aVTrans array. Then clear the array itself.
-*/
+ ** Invoke the xCommit method of all virtual tables in the
+ ** sqlite3.aVTrans array. Then clear the array itself.
+ */
 int sqlite3VtabCommit(sqlite3 *db){
   callFinaliser(db, offsetof(sqlite3_module,xCommit));
   return SQLITE_OK;
 }
 
 /*
-** If the virtual table pVtab supports the transaction interface
-** (xBegin/xRollback/xCommit and optionally xSync) and a transaction is
-** not currently open, invoke the xBegin method now.
-**
-** If the xBegin call is successful, place the sqlite3_vtab pointer
-** in the sqlite3.aVTrans array.
-*/
+ ** If the virtual table pVtab supports the transaction interface
+ ** (xBegin/xRollback/xCommit and optionally xSync) and a transaction is
+ ** not currently open, invoke the xBegin method now.
+ **
+ ** If the xBegin call is successful, place the sqlite3_vtab pointer
+ ** in the sqlite3.aVTrans array.
+ */
 int sqlite3VtabBegin(sqlite3 *db, VTable *pVTab){
   int rc = SQLITE_OK;
   const sqlite3_module *pModule;
@@ -861,7 +857,7 @@ int sqlite3VtabBegin(sqlite3 *db, VTable *pVTab){
 
 
     /* If pVtab is already in the aVTrans array, return early */
-    for(i=0; i<db->nVTrans; i++){
+    for(i = 0; i<db->nVTrans; i++){
       if( db->aVTrans[i]==pVTab ){
         return SQLITE_OK;
       }
@@ -877,18 +873,18 @@ int sqlite3VtabBegin(sqlite3 *db, VTable *pVTab){
 }
 
 /*
-** The first parameter (pDef) is a function implementation.  The
-** second parameter (pExpr) is the first argument to this function.
-** If pExpr is a column in a virtual table, then let the virtual
-** table implementation have an opportunity to overload the function.
-**
-** This routine is used to allow virtual table implementations to
-** overload MATCH, LIKE, GLOB, and REGEXP operators.
-**
-** Return either the pDef argument (indicating no change) or a 
-** new FuncDef structure that is marked as ephemeral using the
-** SQLITE_FUNC_EPHEM flag.
-*/
+ ** The first parameter (pDef) is a function implementation.  The
+ ** second parameter (pExpr) is the first argument to this function.
+ ** If pExpr is a column in a virtual table, then let the virtual
+ ** table implementation have an opportunity to overload the function.
+ **
+ ** This routine is used to allow virtual table implementations to
+ ** overload MATCH, LIKE, GLOB, and REGEXP operators.
+ **
+ ** Return either the pDef argument (indicating no change) or a
+ ** new FuncDef structure that is marked as ephemeral using the
+ ** SQLITE_FUNC_EPHEM flag.
+ */
 FuncDef *sqlite3VtabOverloadFunction(
   sqlite3 *db,    /* Database connection for reporting malloc problems */
   FuncDef *pDef,  /* Function to possibly overload */
@@ -923,7 +919,7 @@ FuncDef *sqlite3VtabOverloadFunction(
   */
   zLowerName = sqlite3DbStrDup(db, pDef->zName);
   if( zLowerName ){
-    for(z=(unsigned char*)zLowerName; *z; z++){
+    for(z = (unsigned char*)zLowerName; *z; z++){
       *z = sqlite3UpperToLower[*z];
     }
     rc = pMod->xFindFunction(pVtab, nArg, zLowerName, &xFunc, &pArg);
@@ -950,17 +946,17 @@ FuncDef *sqlite3VtabOverloadFunction(
 }
 
 /*
-** Make sure virtual table pTab is contained in the pParse->apVirtualLock[]
-** array so that an OP_VBegin will get generated for it.  Add pTab to the
-** array if it is missing.  If pTab is already in the array, this routine
-** is a no-op.
-*/
+ ** Make sure virtual table pTab is contained in the pParse->apVirtualLock[]
+ ** array so that an OP_VBegin will get generated for it.  Add pTab to the
+ ** array if it is missing.  If pTab is already in the array, this routine
+ ** is a no-op.
+ */
 void sqlite3VtabMakeWritable(Parse *pParse, Table *pTab){
   int i, n;
   Table **apVtabLock;
 
   assert( IsVirtual(pTab) );
-  for(i=0; i<pParse->nVtabLock; i++){
+  for(i = 0; i<pParse->nVtabLock; i++){
     if( pTab==pParse->apVtabLock[i] ) return;
   }
   n = (pParse->nVtabLock+1)*sizeof(pParse->apVtabLock[0]);
@@ -974,6 +970,5 @@ void sqlite3VtabMakeWritable(Parse *pParse, Table *pTab){
 }
 
 #endif //* SQLITE_OMIT_VIRTUALTABLE */
-
-  }
+    }
 }

@@ -1,13 +1,8 @@
-﻿using MessagePackLib.MessagePack;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
+using MessagePackLib.MessagePack;
 
 namespace Plugin
 {
@@ -45,10 +40,10 @@ namespace Plugin
                 richTextBox1.AppendText("Me: \n");
                 richTextBox1.SelectionColor = Color.Black;
                 richTextBox1.AppendText(textBox1.Text + Environment.NewLine);
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "chat";
                 msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
-                msgpack.ForcePathObject("WriteInput").AsString = Environment.UserName + ": \n" ;
+                msgpack.ForcePathObject("WriteInput").AsString = Environment.UserName + ": \n";
                 msgpack.ForcePathObject("WriteInput2").AsString = textBox1.Text + Environment.NewLine;
                 Connection.Send(msgpack.Encode2Bytes());
                 textBox1.Clear();
@@ -57,7 +52,7 @@ namespace Plugin
 
         private void FormChat_Load(object sender, EventArgs e)
         {
-            this.TopMost = true;
+            TopMost = true;
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

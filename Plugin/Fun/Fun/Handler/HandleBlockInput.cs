@@ -1,16 +1,9 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
-using System.Text;
+﻿using System;
 using System.Threading;
 
 namespace Plugin.Handler
 {
-    class HandleBlockInput
+    internal class HandleBlockInput
     {
         public void Block(string time)
         {

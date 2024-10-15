@@ -1,24 +1,20 @@
-﻿using Microsoft.Win32;
-using Server.Helper;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using System.Windows.Forms;
+using Microsoft.Win32;
+using Server.Helper;
 using static Server.Helper.RegistrySeeker;
 
 namespace Server.Forms
 {
     public partial class FormRegValueEditWord : Form
     {
-        private readonly RegValueData _value;
+        private const string DWORD_WARNING =
+            "The decimal value entered is greater than the maximum value of a DWORD (32-bit number). Should the value be truncated in order to continue?";
 
-        private const string DWORD_WARNING = "The decimal value entered is greater than the maximum value of a DWORD (32-bit number). Should the value be truncated in order to continue?";
-        private const string QWORD_WARNING = "The decimal value entered is greater than the maximum value of a QWORD (64-bit number). Should the value be truncated in order to continue?";
+        private const string QWORD_WARNING =
+            "The decimal value entered is greater than the maximum value of a QWORD (64-bit number). Should the value be truncated in order to continue?";
+
+        private readonly RegValueData _value;
 
         public FormRegValueEditWord(RegValueData value)
         {
@@ -26,19 +22,19 @@ namespace Server.Forms
 
             InitializeComponent();
 
-            this.valueNameTxtBox.Text = value.Name;
+            valueNameTxtBox.Text = value.Name;
 
             if (value.Kind == RegistryValueKind.DWord)
             {
-                this.Text = "Edit DWORD (32-bit) Value";
-                this.valueDataTxtBox.Type = WordTextBox.WordType.DWORD;
-                this.valueDataTxtBox.Text = Helper.ByteConverter.ToUInt32(value.Data).ToString("x");
+                Text = "Edit DWORD (32-bit) Value";
+                valueDataTxtBox.Type = WordTextBox.WordType.DWORD;
+                valueDataTxtBox.Text = ByteConverter.ToUInt32(value.Data).ToString("x");
             }
             else
             {
-                this.Text = "Edit QWORD (64-bit) Value";
-                this.valueDataTxtBox.Type = WordTextBox.WordType.QWORD;
-                this.valueDataTxtBox.Text = Helper.ByteConverter.ToUInt64(value.Data).ToString("x");
+                Text = "Edit QWORD (64-bit) Value";
+                valueDataTxtBox.Type = WordTextBox.WordType.QWORD;
+                valueDataTxtBox.Text = ByteConverter.ToUInt64(value.Data).ToString("x");
             }
         }
 
@@ -58,17 +54,17 @@ namespace Server.Forms
             if (valueDataTxtBox.IsConversionValid() || IsOverridePossible())
             {
                 _value.Data = _value.Kind == RegistryValueKind.DWord
-                    ? Helper.ByteConverter.GetBytes(valueDataTxtBox.UIntValue)
-                    : Helper.ByteConverter.GetBytes(valueDataTxtBox.ULongValue);
-                this.Tag = _value;
-                this.DialogResult = DialogResult.OK;
+                    ? ByteConverter.GetBytes(valueDataTxtBox.UIntValue)
+                    : ByteConverter.GetBytes(valueDataTxtBox.ULongValue);
+                Tag = _value;
+                DialogResult = DialogResult.OK;
             }
             else
             {
-                this.DialogResult = DialogResult.None;
+                DialogResult = DialogResult.None;
             }
 
-            this.Close();
+            Close();
         }
 
         private DialogResult ShowWarning(string msg, string caption)
@@ -78,7 +74,7 @@ namespace Server.Forms
 
         private bool IsOverridePossible()
         {
-            string message = _value.Kind == RegistryValueKind.DWord ? DWORD_WARNING : QWORD_WARNING;
+            var message = _value.Kind == RegistryValueKind.DWord ? DWORD_WARNING : QWORD_WARNING;
 
             return ShowWarning(message, "Overflow") == DialogResult.Yes;
         }

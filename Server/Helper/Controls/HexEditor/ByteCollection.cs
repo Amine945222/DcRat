@@ -5,14 +5,11 @@ namespace Server.Helper.HexEditor
 {
     public class ByteCollection
     {
-        private List<byte> _bytes;
+        private readonly List<byte> _bytes;
 
         #region Properties
 
-        public int Length
-        {
-            get { return _bytes.Count; }
-        }
+        public int Length => _bytes.Count;
 
         #endregion
 

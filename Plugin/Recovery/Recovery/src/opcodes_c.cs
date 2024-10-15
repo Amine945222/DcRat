@@ -1,24 +1,27 @@
-    /*
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  Repository path : $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/C%23SQLite/src/opcodes_c.cs $
-    **  Revision        : $Revision$
-    **  Last Change Date: $LastChangedDate: 2009-08-04 13:34:52 -0700 (Tue, 04 Aug 2009) $
-    **  Last Changed By : $LastChangedBy: noah.hart $
-    *************************************************************************
-    */
+/*
+ *************************************************************************
+ **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+ **  C#-SQLite is an independent reimplementation of the SQLite software library
+ **
+ **  Repository path : $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/C%23SQLite/src/opcodes_c.cs $
+ **  Revision        : $Revision$
+ **  Last Change Date: $LastChangedDate: 2009-08-04 13:34:52 -0700 (Tue, 04 Aug 2009) $
+ **  Last Changed By : $LastChangedBy: noah.hart $
+ *************************************************************************
+ */
+
 namespace CS_SQLite3
 {
-  public partial class CSSQLite
-  {
-    /* Automatically generated.  Do not edit */
-    /* See the mkopcodec.awk script for details. */
-#if !SQLITE_OMIT_EXPLAIN || !NDEBUG || VDBE_PROFILE || SQLITE_DEBUG
-    static string sqlite3OpcodeName( int i )
+    public partial class CSSQLite
     {
-      string[] azName =  { "?",
+        /* Automatically generated.  Do not edit */
+        /* See the mkopcodec.awk script for details. */
+#if !SQLITE_OMIT_EXPLAIN || !NDEBUG || VDBE_PROFILE || SQLITE_DEBUG
+        private static string sqlite3OpcodeName(int i)
+        {
+            string[] azName =
+            {
+                "?",
 /*   1 */ "VNext",
 /*   2 */ "Affinity",
 /*   3 */ "Column",
@@ -163,10 +166,10 @@ namespace CS_SQLite3
 /* 142 */ "ToBlob",
 /* 143 */ "ToNumeric",
 /* 144 */ "ToInt",
-/* 145 */ "ToReal",
-};
-      return azName[i];
-    }
+/* 145 */ "ToReal"
+            };
+            return azName[i];
+        }
 #endif
-  }
+    }
 }

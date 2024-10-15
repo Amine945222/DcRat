@@ -1,66 +1,57 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.MessagePack
 {
     public class BytesTools
     {
-        static UTF8Encoding utf8Encode = new UTF8Encoding();
+        private static readonly UTF8Encoding utf8Encode = new UTF8Encoding();
 
-        public static byte[] GetUtf8Bytes(String s)
+        public static byte[] GetUtf8Bytes(string s)
         {
-
             return utf8Encode.GetBytes(s);
         }
 
-        public static String GetString(byte[] utf8Bytes)
+        public static string GetString(byte[] utf8Bytes)
         {
             return utf8Encode.GetString(utf8Bytes);
         }
 
-        public static String BytesAsString(byte[] bytes)
+        public static string BytesAsString(byte[] bytes)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (byte b in bytes)
-            {
-                sb.Append(String.Format("{0:D3} ", b));
-            }
+            var sb = new StringBuilder();
+            foreach (var b in bytes) sb.Append(string.Format("{0:D3} ", b));
             return sb.ToString();
         }
 
 
-        public static String BytesAsHexString(byte[] bytes)
+        public static string BytesAsHexString(byte[] bytes)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (byte b in bytes)
-            {
-                sb.Append(String.Format("{0:X2} ", b));
-            }
+            var sb = new StringBuilder();
+            foreach (var b in bytes) sb.Append(string.Format("{0:X2} ", b));
             return sb.ToString();
         }
 
         /// <summary>
-        ///   交换byte数组数据
-        ///   可用于高低数据交换
+        ///     交换byte数组数据
+        ///     可用于高低数据交换
         /// </summary>
         /// <param name="v">要交换的byte数组</param>
         /// <returns>返回交换后的数据</returns>
         public static byte[] SwapBytes(byte[] v)
         {
-            byte[] r = new byte[v.Length];
-            int j = v.Length - 1;
-            for (int i = 0; i < r.Length; i++)
+            var r = new byte[v.Length];
+            var j = v.Length - 1;
+            for (var i = 0; i < r.Length; i++)
             {
                 r[i] = v[j];
                 j--;
             }
+
             return r;
         }
 
-        public static byte[] SwapInt64(Int64 v)
+        public static byte[] SwapInt64(long v)
         {
             //byte[] r = new byte[8];
             //r[7] = (byte)v;
@@ -74,9 +65,9 @@ namespace Server.MessagePack
             return SwapBytes(BitConverter.GetBytes(v));
         }
 
-        public static byte[] SwapInt32(Int32 v)
+        public static byte[] SwapInt32(int v)
         {
-            byte[] r = new byte[4];
+            var r = new byte[4];
             r[3] = (byte)v;
             r[2] = (byte)(v >> 8);
             r[1] = (byte)(v >> 16);
@@ -85,18 +76,17 @@ namespace Server.MessagePack
         }
 
 
-        public static byte[] SwapInt16(Int16 v)
+        public static byte[] SwapInt16(short v)
         {
-            byte[] r = new byte[2];
+            var r = new byte[2];
             r[1] = (byte)v;
             r[0] = (byte)(v >> 8);
             return r;
         }
 
-        public static byte[] SwapDouble(Double v)
+        public static byte[] SwapDouble(double v)
         {
             return SwapBytes(BitConverter.GetBytes(v));
         }
-
     }
 }

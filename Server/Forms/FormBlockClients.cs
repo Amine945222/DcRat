@@ -18,19 +18,21 @@ namespace Server.Forms
                 listBlocked.Items.Add(txtBlock.Text);
                 txtBlock.Clear();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void BtnDelete_Click(object sender, EventArgs e)
         {
             try
             {
-                for (int i = listBlocked.SelectedIndices.Count - 1; i >= 0; i--)
-                {
+                for (var i = listBlocked.SelectedIndices.Count - 1; i >= 0; i--)
                     listBlocked.Items.RemoveAt(listBlocked.SelectedIndices[i]);
-                }
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void FormBlockClients_Load(object sender, EventArgs e)
@@ -39,17 +41,13 @@ namespace Server.Forms
             {
                 listBlocked.Items.Clear();
                 if (!string.IsNullOrWhiteSpace(Properties.Settings.Default.txtBlocked))
-                {
-                    foreach (string client in Properties.Settings.Default.txtBlocked.Split(','))
-                    {
+                    foreach (var client in Properties.Settings.Default.txtBlocked.Split(','))
                         if (!string.IsNullOrWhiteSpace(client))
-                        {
                             listBlocked.Items.Add(client);
-                        }
-                    }
-                }
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void FormBlockClients_FormClosed(object sender, FormClosedEventArgs e)
@@ -59,18 +57,20 @@ namespace Server.Forms
                 lock (Settings.Blocked)
                 {
                     Settings.Blocked.Clear();
-                    List<string> clients = new List<string>();
+                    var clients = new List<string>();
                     foreach (string client in listBlocked.Items)
                     {
                         clients.Add(client);
                         Settings.Blocked.Add(client);
                     }
+
                     Properties.Settings.Default.txtBlocked = string.Join(",", clients);
                     Properties.Settings.Default.Save();
                 }
-
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

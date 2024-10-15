@@ -1,15 +1,21 @@
 ﻿using System;
-using System.ComponentModel;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
 using System.Runtime.InteropServices;
 
 namespace Plugin
 {
     public class BCrypt
     {
+        #region Helperse
+
+        public static void BCRYPT_INIT_AUTH_MODE_INFO(out BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO _AUTH_INFO_STRUCT_)
+        {
+            _AUTH_INFO_STRUCT_ = new BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO();
+            _AUTH_INFO_STRUCT_.cbSize = Marshal.SizeOf(typeof(BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO));
+            _AUTH_INFO_STRUCT_.dwInfoVersion = 1;
+        }
+
+        #endregion
+
         // adapted from https://github.com/AArnott/pinvoke/blob/master/src/BCrypt/
         // Author: @AArnott
         // License: MIT
@@ -18,7 +24,7 @@ namespace Plugin
 
         [StructLayout(LayoutKind.Sequential)]
         //[OfferIntPtrPropertyAccessors]
-        public unsafe partial struct BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
+        public unsafe struct BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
         {
             public const uint BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_VERSION = 1;
 
@@ -53,7 +59,7 @@ namespace Plugin
                 return new BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO
                 {
                     cbSize = Marshal.SizeOf(typeof(BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO)),
-                    dwInfoVersion = BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_VERSION,
+                    dwInfoVersion = BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_VERSION
                 };
             }
         }
@@ -70,13 +76,13 @@ namespace Plugin
 
             BCRYPT_AUTH_MODE_CHAIN_CALLS_FLAG = 0x1,
 
-            BCRYPT_AUTH_MODE_IN_PROGRESS_FLAG = 0x2,
+            BCRYPT_AUTH_MODE_IN_PROGRESS_FLAG = 0x2
         }
 
         [Flags]
         public enum BCryptCloseAlgorithmProviderFlags
         {
-            None = 0x0,
+            None = 0x0
         }
 
         [Flags]
@@ -88,18 +94,18 @@ namespace Plugin
 
             BCRYPT_HASH_REUSABLE_FLAG = 0x20,
 
-            BCRYPT_MULTI_FLAG = 0x40,
+            BCRYPT_MULTI_FLAG = 0x40
         }
 
         public enum BCryptSetPropertyFlags
         {
-            None = 0x0,
+            None = 0x0
         }
 
         [Flags]
         public enum BCryptGenerateSymmetricKeyFlags
         {
-            None = 0x0,
+            None = 0x0
         }
 
         [Flags]
@@ -113,10 +119,10 @@ namespace Plugin
 
             BCRYPT_PAD_PKCS1 = 0x2,
 
-            BCRYPT_PAD_OAEP = 0x4,
+            BCRYPT_PAD_OAEP = 0x4
         }
 
-        # endregion 
+        # endregion
 
 
         #region Functions
@@ -156,7 +162,7 @@ namespace Plugin
             BCryptGenerateSymmetricKeyFlags flags = BCryptGenerateSymmetricKeyFlags.None);
 
         [DllImport(nameof(BCrypt), SetLastError = true)]
-        public static unsafe extern uint BCryptDecrypt(
+        public static extern unsafe uint BCryptDecrypt(
             SafeKeyHandle hKey,
             byte* pbInput,
             int cbInput,
@@ -172,6 +178,7 @@ namespace Plugin
 
 
         #region Classes
+
         public class SafeKeyHandle : SafeHandle
         {
             public static readonly SafeKeyHandle Null = new SafeKeyHandle();
@@ -184,15 +191,15 @@ namespace Plugin
             public SafeKeyHandle(IntPtr preexistingHandle, bool ownsHandle = true)
                 : base(IntPtr.Zero, ownsHandle)
             {
-                this.SetHandle(preexistingHandle);
+                SetHandle(preexistingHandle);
             }
 
-            public override bool IsInvalid => this.handle == IntPtr.Zero;
+            public override bool IsInvalid => handle == IntPtr.Zero;
 
             protected override bool ReleaseHandle()
             {
                 // 0x0 == STATUS_SUCCESS
-                return BCryptDestroyKey(this.handle) == 0x0;
+                return BCryptDestroyKey(handle) == 0x0;
             }
         }
 
@@ -208,28 +215,16 @@ namespace Plugin
             public SafeAlgorithmHandle(IntPtr preexistingHandle, bool ownsHandle = true)
                 : base(IntPtr.Zero, ownsHandle)
             {
-                this.SetHandle(preexistingHandle);
+                SetHandle(preexistingHandle);
             }
 
-            public override bool IsInvalid => this.handle == IntPtr.Zero;
+            public override bool IsInvalid => handle == IntPtr.Zero;
 
             protected override bool ReleaseHandle()
             {
                 // 0x0 == STATUS_SUCCESS
-                return BCryptCloseAlgorithmProvider(this.handle, 0) == 0;
+                return BCryptCloseAlgorithmProvider(handle) == 0;
             }
-        }
-
-        #endregion
-
-
-        #region Helperse
-
-        public static void BCRYPT_INIT_AUTH_MODE_INFO(out BCrypt.BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO _AUTH_INFO_STRUCT_)
-        {
-            _AUTH_INFO_STRUCT_ = new BCrypt.BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO();
-            _AUTH_INFO_STRUCT_.cbSize = Marshal.SizeOf(typeof(BCrypt.BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO));
-            _AUTH_INFO_STRUCT_.dwInfoVersion = 1;
         }
 
         #endregion

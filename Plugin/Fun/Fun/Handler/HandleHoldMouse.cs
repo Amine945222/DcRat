@@ -4,7 +4,7 @@ using Timer = System.Timers.Timer;
 
 namespace Plugin.Handler
 {
-    class HandleHoldMouse
+    internal class HandleHoldMouse
     {
         public void Hold(string time)
         {
@@ -14,7 +14,7 @@ namespace Plugin.Handler
             timer.Elapsed += (sender, args) =>
             {
                 Cursor.Position = currentCursorPosition;
-                if ((DateTime.UtcNow - currentTime).TotalMilliseconds > int.Parse(time)*1000)
+                if ((DateTime.UtcNow - currentTime).TotalMilliseconds > int.Parse(time) * 1000)
                 {
                     timer.Stop();
                     timer.Dispose();

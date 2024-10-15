@@ -1,21 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-
 
 namespace Plugin.Handler
 {
     public class Native
     {
         public delegate bool EnumThreadProc(IntPtr hwnd, IntPtr lParam);
+
         public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
 
         [DllImport("user32.dll")]
-        public static extern IntPtr CreateDesktop(string lpszDesktop, IntPtr lpszDevice, IntPtr pDevmode, int dwFlags, uint dwDesiredAccess, IntPtr lpsa);
+        public static extern IntPtr CreateDesktop(string lpszDesktop, IntPtr lpszDevice, IntPtr pDevmode, int dwFlags,
+            uint dwDesiredAccess, IntPtr lpsa);
 
         [DllImport("user32.dll")]
         public static extern bool SwitchDesktop(IntPtr hDesktop);
@@ -31,6 +29,7 @@ namespace Plugin.Handler
 
         [DllImport("kernel32.dll")]
         public static extern int GetCurrentThreadId();
+
         [DllImport("user32.dll")]
         public static extern IntPtr FindWindow(string className, string windowText);
 
@@ -44,7 +43,7 @@ namespace Plugin.Handler
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool ShowWindow(IntPtr hWnd, ShowWindowCommands nCmdShow);
-                
+
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern bool EnumThreadWindows(int threadId, EnumThreadProc pfnEnum, IntPtr lParam);
 
@@ -81,9 +80,9 @@ namespace Plugin.Handler
 
         [DllImport("winmm.dll", EntryPoint = "mciSendStringA", CharSet = CharSet.Ansi)]
         public static extern int mciSendString(string lpstrCommand,
-                                                  StringBuilder lpstrReturnString,
-                                                  int uReturnLength,
-                                                  IntPtr hwndCallback);
+            StringBuilder lpstrReturnString,
+            int uReturnLength,
+            IntPtr hwndCallback);
     }
 
 
@@ -95,7 +94,7 @@ namespace Plugin.Handler
 
         ShowMinimized = 2,
 
-        Maximize = 3, 
+        Maximize = 3,
 
         ShowMaximized = 3,
 

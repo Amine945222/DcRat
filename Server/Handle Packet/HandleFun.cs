@@ -1,10 +1,7 @@
-﻿using Server.Forms;
-using Server.MessagePack;
+﻿using System.Windows.Forms;
 using Server.Connection;
-using System;
-using System.Drawing;
-using System.IO;
-using System.Windows.Forms;
+using Server.Forms;
+using Server.MessagePack;
 
 namespace Server.Handle_Packet
 {
@@ -14,17 +11,17 @@ namespace Server.Handle_Packet
         {
             try
             {
-                FormFun fun = (FormFun)Application.OpenForms["fun:" + unpack_msgpack.ForcePathObject("Hwid").AsString];
+                var fun = (FormFun)Application.OpenForms["fun:" + unpack_msgpack.ForcePathObject("Hwid").AsString];
                 if (fun != null)
-                {
                     if (fun.Client == null)
                     {
                         fun.Client = client;
                         fun.timer1.Enabled = true;
                     }
-                }
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

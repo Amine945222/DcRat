@@ -1,49 +1,44 @@
 ﻿/*
  *   github.com/ymofen/SimpleMsgPack.Net
  */
-using Server.Algorithm;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-
+using Server.Algorithm;
 
 namespace Server.MessagePack
 {
     public class MsgPackEnum : IEnumerator
     {
-        List<MsgPack> children;
-        int position = -1;
+        private readonly List<MsgPack> children;
+        private int position = -1;
 
         public MsgPackEnum(List<MsgPack> obj)
         {
             children = obj;
         }
-        object IEnumerator.Current
-        {
-            get { return children[position]; }
-        }
+
+        object IEnumerator.Current => children[position];
 
         bool IEnumerator.MoveNext()
         {
             position++;
-            return (position < children.Count);
+            return position < children.Count;
         }
 
         void IEnumerator.Reset()
         {
             position = -1;
         }
-
     }
 
     public class MsgPackArray
     {
-        List<MsgPack> children;
-        MsgPack owner;
+        private readonly List<MsgPack> children;
+        private readonly MsgPack owner;
 
         public MsgPackArray(MsgPack msgpackObj, List<MsgPack> listObj)
         {
@@ -51,83 +46,113 @@ namespace Server.MessagePack
             children = listObj;
         }
 
+        public MsgPack this[int index] => children[index];
+
+        public int Length => children.Count;
+
         public MsgPack Add()
         {
             return owner.AddArrayChild();
         }
 
-        public MsgPack Add(String value)
+        public MsgPack Add(string value)
         {
-            MsgPack obj = owner.AddArrayChild();
+            var obj = owner.AddArrayChild();
             obj.AsString = value;
             return obj;
         }
 
-        public MsgPack Add(Int64 value)
+        public MsgPack Add(long value)
         {
-            MsgPack obj = owner.AddArrayChild();
+            var obj = owner.AddArrayChild();
             obj.SetAsInteger(value);
             return obj;
         }
 
-        public MsgPack Add(Double value)
+        public MsgPack Add(double value)
         {
-            MsgPack obj = owner.AddArrayChild();
+            var obj = owner.AddArrayChild();
             obj.SetAsFloat(value);
             return obj;
-        }
-
-        public MsgPack this[int index]
-        {
-            get { return children[index]; }
-        }
-
-        public int Length
-        {
-            get { return children.Count; }
         }
     }
 
     public class MsgPack : IEnumerable
     {
-        string name;
-        string lowerName;
-        object innerValue;
-        MsgPackType valueType;
-        MsgPack parent;
-        List<MsgPack> children = new List<MsgPack>();
-        MsgPackArray refAsArray = null;
+        private readonly List<MsgPack> children = new List<MsgPack>();
+        private object innerValue;
+        private string lowerName;
+        private string name;
+        private MsgPack parent;
+        private MsgPackArray refAsArray;
+
+        public string AsString
+        {
+            get => GetAsString();
+            set => SetAsString(value);
+        }
+
+        public long AsInteger
+        {
+            get => GetAsInteger();
+            set => SetAsInteger(value);
+        }
+
+        public double AsFloat
+        {
+            get => GetAsFloat();
+            set => SetAsFloat(value);
+        }
+
+        public MsgPackArray AsArray
+        {
+            get
+            {
+                lock (this)
+                {
+                    if (refAsArray == null) refAsArray = new MsgPackArray(this, children);
+                }
+
+                return refAsArray;
+            }
+        }
+
+
+        public MsgPackType ValueType { get; private set; }
+
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new MsgPackEnum(children);
+        }
 
         private void SetName(string value)
         {
-            this.name = value;
-            this.lowerName = name.ToLower();
+            name = value;
+            lowerName = name.ToLower();
         }
 
         private void Clear()
         {
-            for (int i = 0; i < children.Count; i++)
-            {
-                ((MsgPack)children[i]).Clear();
-            }
+            for (var i = 0; i < children.Count; i++) children[i].Clear();
             children.Clear();
         }
 
         private MsgPack InnerAdd()
         {
-            MsgPack r = new MsgPack();
+            var r = new MsgPack();
             r.parent = this;
-            this.children.Add(r);
+            children.Add(r);
             return r;
         }
 
         private int IndexOf(string name)
         {
-            int i = -1;
-            int r = -1;
+            var i = -1;
+            var r = -1;
 
-            string tmp = name.ToLower();
-            foreach (MsgPack item in children)
+            var tmp = name.ToLower();
+            foreach (var item in children)
             {
                 i++;
                 if (tmp.Equals(item.lowerName))
@@ -136,40 +161,38 @@ namespace Server.MessagePack
                     break;
                 }
             }
+
             return r;
         }
 
         public MsgPack FindObject(string name)
         {
-            int i = IndexOf(name);
+            var i = IndexOf(name);
             if (i == -1)
-            {
                 return null;
-            }
-            else
-            {
-                return this.children[i];
-            }
+            return children[i];
         }
 
 
         private MsgPack InnerAddMapChild()
         {
-            if (valueType != MsgPackType.Map)
+            if (ValueType != MsgPackType.Map)
             {
                 Clear();
-                this.valueType = MsgPackType.Map;
+                ValueType = MsgPackType.Map;
             }
+
             return InnerAdd();
         }
 
         private MsgPack InnerAddArrayChild()
         {
-            if (valueType != MsgPackType.Array)
+            if (ValueType != MsgPackType.Array)
             {
                 Clear();
-                this.valueType = MsgPackType.Array;
+                ValueType = MsgPackType.Array;
             }
+
             return InnerAdd();
         }
 
@@ -182,7 +205,7 @@ namespace Server.MessagePack
         {
             byte b;
             byte[] lenBytes;
-            int len = children.Count;
+            var len = children.Count;
             if (len <= 15)
             {
                 b = (byte)(0x80 + (byte)len);
@@ -193,18 +216,18 @@ namespace Server.MessagePack
                 b = 0xDE;
                 ms.WriteByte(b);
 
-                lenBytes = BytesTools.SwapBytes(BitConverter.GetBytes((Int16)len));
+                lenBytes = BytesTools.SwapBytes(BitConverter.GetBytes((short)len));
                 ms.Write(lenBytes, 0, lenBytes.Length);
             }
             else
             {
                 b = 0xDF;
                 ms.WriteByte(b);
-                lenBytes = BytesTools.SwapBytes(BitConverter.GetBytes((Int32)len));
+                lenBytes = BytesTools.SwapBytes(BitConverter.GetBytes(len));
                 ms.Write(lenBytes, 0, lenBytes.Length);
             }
 
-            for (int i = 0; i < len; i++)
+            for (var i = 0; i < len; i++)
             {
                 WriteTools.WriteString(ms, children[i].name);
                 children[i].Encode2Stream(ms);
@@ -215,7 +238,7 @@ namespace Server.MessagePack
         {
             byte b;
             byte[] lenBytes;
-            int len = children.Count;
+            var len = children.Count;
             if (len <= 15)
             {
                 b = (byte)(0x90 + (byte)len);
@@ -226,93 +249,89 @@ namespace Server.MessagePack
                 b = 0xDC;
                 ms.WriteByte(b);
 
-                lenBytes = BytesTools.SwapBytes(BitConverter.GetBytes((Int16)len));
+                lenBytes = BytesTools.SwapBytes(BitConverter.GetBytes((short)len));
                 ms.Write(lenBytes, 0, lenBytes.Length);
             }
             else
             {
                 b = 0xDD;
                 ms.WriteByte(b);
-                lenBytes = BytesTools.SwapBytes(BitConverter.GetBytes((Int32)len));
+                lenBytes = BytesTools.SwapBytes(BitConverter.GetBytes(len));
                 ms.Write(lenBytes, 0, lenBytes.Length);
             }
 
 
-            for (int i = 0; i < len; i++)
-            {
-                ((MsgPack)children[i]).Encode2Stream(ms);
-            }
+            for (var i = 0; i < len; i++) children[i].Encode2Stream(ms);
         }
 
-        public void SetAsInteger(Int64 value)
+        public void SetAsInteger(long value)
         {
-            this.innerValue = value;
-            this.valueType = MsgPackType.Integer;
+            innerValue = value;
+            ValueType = MsgPackType.Integer;
         }
 
-        public void SetAsUInt64(UInt64 value)
+        public void SetAsUInt64(ulong value)
         {
-            this.innerValue = value;
-            this.valueType = MsgPackType.UInt64;
+            innerValue = value;
+            ValueType = MsgPackType.UInt64;
         }
 
-        public UInt64 GetAsUInt64()
+        public ulong GetAsUInt64()
         {
-            switch (this.valueType)
+            switch (ValueType)
             {
                 case MsgPackType.Integer:
-                    return Convert.ToUInt64((Int64)this.innerValue);
+                    return Convert.ToUInt64((long)innerValue);
                 case MsgPackType.UInt64:
-                    return (UInt64)this.innerValue;
+                    return (ulong)innerValue;
                 case MsgPackType.String:
-                    return UInt64.Parse(this.innerValue.ToString().Trim());
+                    return ulong.Parse(innerValue.ToString().Trim());
                 case MsgPackType.Float:
-                    return Convert.ToUInt64((Double)this.innerValue);
+                    return Convert.ToUInt64((double)innerValue);
                 case MsgPackType.Single:
-                    return Convert.ToUInt64((Single)this.innerValue);
+                    return Convert.ToUInt64((float)innerValue);
                 case MsgPackType.DateTime:
-                    return Convert.ToUInt64((DateTime)this.innerValue);
-                default:
-                    return 0;
-            }
-
-        }
-
-        public Int64 GetAsInteger()
-        {
-            switch (this.valueType)
-            {
-                case MsgPackType.Integer:
-                    return (Int64)this.innerValue;
-                case MsgPackType.UInt64:
-                    return Convert.ToInt64((Int64)this.innerValue);
-                case MsgPackType.String:
-                    return Int64.Parse(this.innerValue.ToString().Trim());
-                case MsgPackType.Float:
-                    return Convert.ToInt64((Double)this.innerValue);
-                case MsgPackType.Single:
-                    return Convert.ToInt64((Single)this.innerValue);
-                case MsgPackType.DateTime:
-                    return Convert.ToInt64((DateTime)this.innerValue);
+                    return Convert.ToUInt64((DateTime)innerValue);
                 default:
                     return 0;
             }
         }
 
-        public Double GetAsFloat()
+        public long GetAsInteger()
         {
-            switch (this.valueType)
+            switch (ValueType)
             {
                 case MsgPackType.Integer:
-                    return Convert.ToDouble((Int64)this.innerValue);
+                    return (long)innerValue;
+                case MsgPackType.UInt64:
+                    return Convert.ToInt64((long)innerValue);
                 case MsgPackType.String:
-                    return Double.Parse((String)this.innerValue);
+                    return long.Parse(innerValue.ToString().Trim());
                 case MsgPackType.Float:
-                    return (Double)this.innerValue;
+                    return Convert.ToInt64((double)innerValue);
                 case MsgPackType.Single:
-                    return (Single)this.innerValue;
+                    return Convert.ToInt64((float)innerValue);
                 case MsgPackType.DateTime:
-                    return Convert.ToInt64((DateTime)this.innerValue);
+                    return Convert.ToInt64((DateTime)innerValue);
+                default:
+                    return 0;
+            }
+        }
+
+        public double GetAsFloat()
+        {
+            switch (ValueType)
+            {
+                case MsgPackType.Integer:
+                    return Convert.ToDouble((long)innerValue);
+                case MsgPackType.String:
+                    return double.Parse((string)innerValue);
+                case MsgPackType.Float:
+                    return (double)innerValue;
+                case MsgPackType.Single:
+                    return (float)innerValue;
+                case MsgPackType.DateTime:
+                    return Convert.ToInt64((DateTime)innerValue);
                 default:
                     return 0;
             }
@@ -321,42 +340,42 @@ namespace Server.MessagePack
 
         public void SetAsBytes(byte[] value)
         {
-            this.innerValue = value;
-            this.valueType = MsgPackType.Binary;
+            innerValue = value;
+            ValueType = MsgPackType.Binary;
         }
 
         public byte[] GetAsBytes()
         {
-            switch (this.valueType)
+            switch (ValueType)
             {
                 case MsgPackType.Integer:
-                    return BitConverter.GetBytes((Int64)this.innerValue);
+                    return BitConverter.GetBytes((long)innerValue);
                 case MsgPackType.String:
-                    return BytesTools.GetUtf8Bytes(this.innerValue.ToString());
+                    return BytesTools.GetUtf8Bytes(innerValue.ToString());
                 case MsgPackType.Float:
-                    return BitConverter.GetBytes((Double)this.innerValue);
+                    return BitConverter.GetBytes((double)innerValue);
                 case MsgPackType.Single:
-                    return BitConverter.GetBytes((Single)this.innerValue);
+                    return BitConverter.GetBytes((float)innerValue);
                 case MsgPackType.DateTime:
-                    long dateval = ((DateTime)this.innerValue).ToBinary();
+                    var dateval = ((DateTime)innerValue).ToBinary();
                     return BitConverter.GetBytes(dateval);
                 case MsgPackType.Binary:
-                    return (byte[])this.innerValue;
+                    return (byte[])innerValue;
                 default:
                     return new byte[] { };
             }
         }
 
-        public void Add(string key, String value)
+        public void Add(string key, string value)
         {
-            MsgPack tmp = InnerAddArrayChild();
+            var tmp = InnerAddArrayChild();
             tmp.name = key;
             tmp.SetAsString(value);
         }
 
         public void Add(string key, int value)
         {
-            MsgPack tmp = InnerAddArrayChild();
+            var tmp = InnerAddArrayChild();
             tmp.name = key;
             tmp.SetAsInteger(value);
         }
@@ -366,7 +385,7 @@ namespace Server.MessagePack
             if (File.Exists(fileName))
             {
                 byte[] value = null;
-                FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
                 value = new byte[fs.Length];
                 await fs.ReadAsync(value, 0, (int)fs.Length);
                 await fs.FlushAsync();
@@ -375,43 +394,35 @@ namespace Server.MessagePack
                 SetAsBytes(value);
                 return true;
             }
-            else
-            {
-                return false;
-            }
 
+            return false;
         }
 
         public async Task<bool> SaveBytesToFile(string fileName)
         {
-            if (this.innerValue != null)
+            if (innerValue != null)
             {
-                FileStream fs = new FileStream(fileName, FileMode.Append);
-                await fs.WriteAsync(((byte[])this.innerValue), 0, ((byte[])this.innerValue).Length);
+                var fs = new FileStream(fileName, FileMode.Append);
+                await fs.WriteAsync((byte[])innerValue, 0, ((byte[])innerValue).Length);
                 await fs.FlushAsync();
                 fs.Close();
                 fs.Dispose();
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
         public MsgPack ForcePathObject(string path)
         {
             MsgPack tmpParent, tmpObject;
             tmpParent = this;
-            string[] pathList = path.Trim().Split(new Char[] { '.', '/', '\\' });
+            var pathList = path.Trim().Split('.', '/', '\\');
             string tmp = null;
             if (pathList.Length == 0)
-            {
                 return null;
-            }
-            else if (pathList.Length > 1)
-            {
-                for (int i = 0; i < pathList.Length - 1; i++)
+            if (pathList.Length > 1)
+                for (var i = 0; i < pathList.Length - 1; i++)
                 {
                     tmp = pathList[i];
                     tmpObject = tmpParent.FindObject(tmp);
@@ -425,70 +436,61 @@ namespace Server.MessagePack
                         tmpParent = tmpObject;
                     }
                 }
-            }
+
             tmp = pathList[pathList.Length - 1];
-            int j = tmpParent.IndexOf(tmp);
+            var j = tmpParent.IndexOf(tmp);
             if (j > -1)
             {
                 return tmpParent.children[j];
             }
-            else
-            {
-                tmpParent = tmpParent.InnerAddMapChild();
-                tmpParent.SetName(tmp);
-                return tmpParent;
-            }
+
+            tmpParent = tmpParent.InnerAddMapChild();
+            tmpParent.SetName(tmp);
+            return tmpParent;
         }
 
         public void SetAsNull()
         {
             Clear();
-            this.innerValue = null;
-            this.valueType = MsgPackType.Null;
+            innerValue = null;
+            ValueType = MsgPackType.Null;
         }
 
-        public void SetAsString(String value)
+        public void SetAsString(string value)
         {
-            this.innerValue = value;
-            this.valueType = MsgPackType.String;
+            innerValue = value;
+            ValueType = MsgPackType.String;
         }
 
-        public String GetAsString()
+        public string GetAsString()
         {
-            if (this.innerValue == null)
-            {
+            if (innerValue == null)
                 return "";
-            }
-            else
-            {
-                return this.innerValue.ToString();
-            }
-
+            return innerValue.ToString();
         }
 
-        public void SetAsBoolean(Boolean bVal)
+        public void SetAsBoolean(bool bVal)
         {
-            this.valueType = MsgPackType.Boolean;
-            this.innerValue = bVal;
+            ValueType = MsgPackType.Boolean;
+            innerValue = bVal;
         }
 
-        public void SetAsSingle(Single fVal)
+        public void SetAsSingle(float fVal)
         {
-            this.valueType = MsgPackType.Single;
-            this.innerValue = fVal;
+            ValueType = MsgPackType.Single;
+            innerValue = fVal;
         }
 
-        public void SetAsFloat(Double fVal)
+        public void SetAsFloat(double fVal)
         {
-            this.valueType = MsgPackType.Float;
-            this.innerValue = fVal;
+            ValueType = MsgPackType.Float;
+            innerValue = fVal;
         }
-
 
 
         public void DecodeFromBytes(byte[] bytes)
         {
-            using (MemoryStream ms = new MemoryStream())
+            using (var ms = new MemoryStream())
             {
                 bytes = Zip.Decompress(bytes);
                 ms.Write(bytes, 0, bytes.Length);
@@ -499,30 +501,30 @@ namespace Server.MessagePack
 
         public void DecodeFromFile(string fileName)
         {
-            FileStream fs = new FileStream(fileName, FileMode.Open);
+            var fs = new FileStream(fileName, FileMode.Open);
             DecodeFromStream(fs);
             fs.Dispose();
         }
 
 
-
         public void DecodeFromStream(Stream ms)
         {
-            byte lvByte = (byte)ms.ReadByte();
+            var lvByte = (byte)ms.ReadByte();
             byte[] rawByte = null;
             MsgPack msgPack = null;
-            int len = 0;
-            int i = 0;
+            var len = 0;
+            var i = 0;
 
             if (lvByte <= 0x7F)
-            {   //positive fixint	0xxxxxxx	0x00 - 0x7f
+            {
+                //positive fixint	0xxxxxxx	0x00 - 0x7f
                 SetAsInteger(lvByte);
             }
-            else if ((lvByte >= 0x80) && (lvByte <= 0x8F))
+            else if (lvByte >= 0x80 && lvByte <= 0x8F)
             {
                 //fixmap	1000xxxx	0x80 - 0x8f
-                this.Clear();
-                this.valueType = MsgPackType.Map;
+                Clear();
+                ValueType = MsgPackType.Map;
                 len = lvByte - 0x80;
                 for (i = 0; i < len; i++)
                 {
@@ -531,11 +533,11 @@ namespace Server.MessagePack
                     msgPack.DecodeFromStream(ms);
                 }
             }
-            else if ((lvByte >= 0x90) && (lvByte <= 0x9F))  //fixarray	1001xxxx	0x90 - 0x9f
+            else if (lvByte >= 0x90 && lvByte <= 0x9F) //fixarray	1001xxxx	0x90 - 0x9f
             {
                 //fixmap	1000xxxx	0x80 - 0x8f
-                this.Clear();
-                this.valueType = MsgPackType.Array;
+                Clear();
+                ValueType = MsgPackType.Array;
                 len = lvByte - 0x90;
                 for (i = 0; i < len; i++)
                 {
@@ -543,13 +545,14 @@ namespace Server.MessagePack
                     msgPack.DecodeFromStream(ms);
                 }
             }
-            else if ((lvByte >= 0xA0) && (lvByte <= 0xBF))  // fixstr	101xxxxx	0xa0 - 0xbf
+            else if (lvByte >= 0xA0 && lvByte <= 0xBF) // fixstr	101xxxxx	0xa0 - 0xbf
             {
                 len = lvByte - 0xA0;
                 SetAsString(ReadTools.ReadString(ms, len));
             }
-            else if ((lvByte >= 0xE0) && (lvByte <= 0xFF))
-            {   /// -1..-32
+            else if (lvByte >= 0xE0 && lvByte <= 0xFF)
+            {
+                /// -1..-32
                 //  negative fixnum stores 5-bit negative integer
                 //  +--------+
                 //  |111YYYYY|
@@ -573,14 +576,16 @@ namespace Server.MessagePack
                 SetAsBoolean(true);
             }
             else if (lvByte == 0xC4)
-            {  // max 255
+            {
+                // max 255
                 len = ms.ReadByte();
                 rawByte = new byte[len];
                 ms.Read(rawByte, 0, len);
                 SetAsBytes(rawByte);
             }
             else if (lvByte == 0xC5)
-            {  // max 65535                
+            {
+                // max 65535                
                 rawByte = new byte[2];
                 ms.Read(rawByte, 0, 2);
                 rawByte = BytesTools.SwapBytes(rawByte);
@@ -592,7 +597,8 @@ namespace Server.MessagePack
                 SetAsBytes(rawByte);
             }
             else if (lvByte == 0xC6)
-            {  // binary max: 2^32-1                
+            {
+                // binary max: 2^32-1                
                 rawByte = new byte[4];
                 ms.Read(rawByte, 0, 4);
                 rawByte = BytesTools.SwapBytes(rawByte);
@@ -603,12 +609,13 @@ namespace Server.MessagePack
                 ms.Read(rawByte, 0, len);
                 SetAsBytes(rawByte);
             }
-            else if ((lvByte == 0xC7) || (lvByte == 0xC8) || (lvByte == 0xC9))
+            else if (lvByte == 0xC7 || lvByte == 0xC8 || lvByte == 0xC9)
             {
                 throw new Exception("(ext8,ext16,ex32) type $c7,$c8,$c9");
             }
             else if (lvByte == 0xCA)
-            {  // float 32              
+            {
+                // float 32              
                 rawByte = new byte[4];
                 ms.Read(rawByte, 0, 4);
                 rawByte = BytesTools.SwapBytes(rawByte);
@@ -616,14 +623,16 @@ namespace Server.MessagePack
                 SetAsSingle(BitConverter.ToSingle(rawByte, 0));
             }
             else if (lvByte == 0xCB)
-            {  // float 64              
+            {
+                // float 64              
                 rawByte = new byte[8];
                 ms.Read(rawByte, 0, 8);
                 rawByte = BytesTools.SwapBytes(rawByte);
                 SetAsFloat(BitConverter.ToDouble(rawByte, 0));
             }
             else if (lvByte == 0xCC)
-            {  // uint8   
+            {
+                // uint8   
                 //      uint 8 stores a 8-bit unsigned integer
                 //      +--------+--------+
                 //      |  0xcc  |ZZZZZZZZ|
@@ -632,7 +641,8 @@ namespace Server.MessagePack
                 SetAsInteger(lvByte);
             }
             else if (lvByte == 0xCD)
-            {  // uint16      
+            {
+                // uint16      
                 //    uint 16 stores a 16-bit big-endian unsigned integer
                 //    +--------+--------+--------+
                 //    |  0xcd  |ZZZZZZZZ|ZZZZZZZZ|
@@ -674,8 +684,8 @@ namespace Server.MessagePack
                 rawByte = BytesTools.SwapBytes(rawByte);
                 len = BitConverter.ToInt16(rawByte, 0);
 
-                this.Clear();
-                this.valueType = MsgPackType.Array;
+                Clear();
+                ValueType = MsgPackType.Array;
                 for (i = 0; i < len; i++)
                 {
                     msgPack = InnerAdd();
@@ -692,8 +702,8 @@ namespace Server.MessagePack
                 rawByte = BytesTools.SwapBytes(rawByte);
                 len = BitConverter.ToInt16(rawByte, 0);
 
-                this.Clear();
-                this.valueType = MsgPackType.Array;
+                Clear();
+                ValueType = MsgPackType.Array;
                 for (i = 0; i < len; i++)
                 {
                     msgPack = InnerAdd();
@@ -718,8 +728,8 @@ namespace Server.MessagePack
                 rawByte = BytesTools.SwapBytes(rawByte);
                 len = BitConverter.ToInt16(rawByte, 0);
 
-                this.Clear();
-                this.valueType = MsgPackType.Map;
+                Clear();
+                ValueType = MsgPackType.Map;
                 for (i = 0; i < len; i++)
                 {
                     msgPack = InnerAdd();
@@ -737,8 +747,8 @@ namespace Server.MessagePack
                 rawByte = BytesTools.SwapBytes(rawByte);
                 len = BitConverter.ToInt16(rawByte, 0);
 
-                this.Clear();
-                this.valueType = MsgPackType.Map;
+                Clear();
+                ValueType = MsgPackType.Map;
                 for (i = 0; i < len; i++)
                 {
                     msgPack = InnerAdd();
@@ -756,8 +766,8 @@ namespace Server.MessagePack
                 rawByte = BytesTools.SwapBytes(rawByte);
                 len = BitConverter.ToInt32(rawByte, 0);
 
-                this.Clear();
-                this.valueType = MsgPackType.Map;
+                Clear();
+                ValueType = MsgPackType.Map;
                 for (i = 0; i < len; i++)
                 {
                     msgPack = InnerAdd();
@@ -826,10 +836,10 @@ namespace Server.MessagePack
 
         public byte[] Encode2Bytes()
         {
-            using (MemoryStream ms = new MemoryStream())
+            using (var ms = new MemoryStream())
             {
                 Encode2Stream(ms);
-                byte[] r = new byte[ms.Length];
+                var r = new byte[ms.Length];
                 ms.Position = 0;
                 ms.Read(r, 0, (int)ms.Length);
                 return Zip.Compress(r);
@@ -838,35 +848,35 @@ namespace Server.MessagePack
 
         public void Encode2Stream(Stream ms)
         {
-            switch (this.valueType)
+            switch (ValueType)
             {
                 case MsgPackType.Unknown:
                 case MsgPackType.Null:
                     WriteTools.WriteNull(ms);
                     break;
                 case MsgPackType.String:
-                    WriteTools.WriteString(ms, (String)this.innerValue);
+                    WriteTools.WriteString(ms, (string)innerValue);
                     break;
                 case MsgPackType.Integer:
-                    WriteTools.WriteInteger(ms, (Int64)this.innerValue);
+                    WriteTools.WriteInteger(ms, (long)innerValue);
                     break;
                 case MsgPackType.UInt64:
-                    WriteTools.WriteUInt64(ms, (UInt64)this.innerValue);
+                    WriteTools.WriteUInt64(ms, (ulong)innerValue);
                     break;
                 case MsgPackType.Boolean:
-                    WriteTools.WriteBoolean(ms, (Boolean)this.innerValue);
+                    WriteTools.WriteBoolean(ms, (bool)innerValue);
                     break;
                 case MsgPackType.Float:
-                    WriteTools.WriteFloat(ms, (Double)this.innerValue);
+                    WriteTools.WriteFloat(ms, (double)innerValue);
                     break;
                 case MsgPackType.Single:
-                    WriteTools.WriteFloat(ms, (Single)this.innerValue);
+                    WriteTools.WriteFloat(ms, (float)innerValue);
                     break;
                 case MsgPackType.DateTime:
                     WriteTools.WriteInteger(ms, GetAsInteger());
                     break;
                 case MsgPackType.Binary:
-                    WriteTools.WriteBinary(ms, (byte[])this.innerValue);
+                    WriteTools.WriteBinary(ms, (byte[])innerValue);
                     break;
                 case MsgPackType.Map:
                     WriteMap(ms);
@@ -878,56 +888,6 @@ namespace Server.MessagePack
                     WriteTools.WriteNull(ms);
                     break;
             }
-        }
-
-        public String AsString
-        {
-            get
-            {
-                return GetAsString();
-            }
-            set
-            {
-                SetAsString(value);
-            }
-        }
-
-        public Int64 AsInteger
-        {
-            get { return GetAsInteger(); }
-            set { SetAsInteger((Int64)value); }
-        }
-
-        public Double AsFloat
-        {
-            get { return GetAsFloat(); }
-            set { SetAsFloat(value); }
-        }
-        public MsgPackArray AsArray
-        {
-            get
-            {
-                lock (this)
-                {
-                    if (refAsArray == null)
-                    {
-                        refAsArray = new MsgPackArray(this, children);
-                    }
-                }
-                return refAsArray;
-            }
-        }
-
-
-        public MsgPackType ValueType
-        {
-            get { return valueType; }
-        }
-
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new MsgPackEnum(children);
         }
     }
 }

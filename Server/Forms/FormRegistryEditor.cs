@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -14,38 +13,33 @@ namespace Server.Forms
 {
     public partial class FormRegistryEditor : Form
     {
-        public Form1 F { get; set; }
-        internal Clients Client { get; set; }
-        internal Clients ParentClient { get; set; }
-
-
-
-
         public FormRegistryEditor()
         {
             InitializeComponent();
         }
 
+        public Form1 F { get; set; }
+        internal Clients Client { get; set; }
+        internal Clients ParentClient { get; set; }
+
         private void FrmRegistryEditor_Load(object sender, EventArgs e)
         {
             if (ParentClient.Admin != true)
-            {
                 MessageBox.Show(
                     "The client software is not running as administrator and therefore some functionality like Update, Create, Open and Delete may not work properly!",
                     "Alert!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
         }
 
         private void AddRootKey(RegSeekerMatch match)
         {
-            TreeNode node = CreateNode(match.Key, match.Key, match.Data);
+            var node = CreateNode(match.Key, match.Key, match.Data);
             node.Nodes.Add(new TreeNode());
             tvRegistryDirectory.Nodes.Add(node);
         }
 
         private TreeNode AddKeyToTree(TreeNode parent, RegSeekerMatch subKey)
         {
-            TreeNode node = CreateNode(subKey.Key, subKey.Key, subKey.Data);
+            var node = CreateNode(subKey.Key, subKey.Key, subKey.Data);
             parent.Nodes.Add(node);
             if (subKey.HasSubKeys)
                 node.Nodes.Add(new TreeNode());
@@ -54,7 +48,7 @@ namespace Server.Forms
 
         private TreeNode CreateNode(string key, string text, object tag)
         {
-            return new TreeNode()
+            return new TreeNode
             {
                 Text = text,
                 Name = key,
@@ -77,7 +71,7 @@ namespace Server.Forms
             }
             else
             {
-                TreeNode parent = GetTreeNode(rootKey);
+                var parent = GetTreeNode(rootKey);
 
                 if (parent != null)
                 {
@@ -94,9 +88,9 @@ namespace Server.Forms
 
         public void CreateNewKey(string rootKey, RegSeekerMatch match)
         {
-            TreeNode parent = GetTreeNode(rootKey);
+            var parent = GetTreeNode(rootKey);
 
-            TreeNode node = AddKeyToTree(parent, match);
+            var node = AddKeyToTree(parent, match);
 
             node.EnsureVisible();
 
@@ -108,16 +102,14 @@ namespace Server.Forms
 
         public void DeleteKey(string rootKey, string subKey)
         {
-            TreeNode parent = GetTreeNode(rootKey);
+            var parent = GetTreeNode(rootKey);
 
-            if (parent.Nodes.ContainsKey(subKey)) {
-                parent.Nodes.RemoveByKey(subKey);
-            }
+            if (parent.Nodes.ContainsKey(subKey)) parent.Nodes.RemoveByKey(subKey);
         }
 
         public void RenameKey(string rootKey, string oldName, string newName)
         {
-            TreeNode parent = GetTreeNode(rootKey);
+            var parent = GetTreeNode(rootKey);
 
             if (parent.Nodes.ContainsKey(oldName))
             {
@@ -129,25 +121,56 @@ namespace Server.Forms
         }
 
         /// <summary>
-        /// Tries to find the desired TreeNode given the full path to it.
+        ///     Tries to find the desired TreeNode given the full path to it.
         /// </summary>
         /// <param name="path">The full path to the TreeNode.</param>
-        /// <returns>Null if an invalid name is passed or the TreeNode could not be found; The TreeNode represented by the full path.</returns>
+        /// <returns>
+        ///     Null if an invalid name is passed or the TreeNode could not be found; The TreeNode represented by the full
+        ///     path.
+        /// </returns>
         private TreeNode GetTreeNode(string path)
         {
-            string[] nodePath = path.Split(new char[] { '\\' });
+            var nodePath = path.Split('\\');
 
-            TreeNode lastNode = tvRegistryDirectory.Nodes[nodePath[0]];
+            var lastNode = tvRegistryDirectory.Nodes[nodePath[0]];
             if (lastNode == null)
                 return null;
 
-            for (int i = 1; i < nodePath.Length; i++)
+            for (var i = 1; i < nodePath.Length; i++)
             {
                 lastNode = lastNode.Nodes[nodePath[i]];
                 if (lastNode == null)
                     return null;
             }
+
             return lastNode;
+        }
+
+        private void createRegistryKey_AfterExpand(object sender, TreeViewEventArgs e)
+        {
+            if (e.Node == tvRegistryDirectory.SelectedNode)
+            {
+                createNewRegistryKey_Click(this, e);
+
+                tvRegistryDirectory.AfterExpand -= createRegistryKey_AfterExpand;
+            }
+        }
+
+        public void timer1_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!ParentClient.TcpClient.Connected || !Client.TcpClient.Connected) Close();
+            }
+            catch
+            {
+                Close();
+            }
+        }
+
+        private void FormRegistryEditor_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            ThreadPool.QueueUserWorkItem(o => { Client?.Disconnected(); });
         }
 
 
@@ -155,17 +178,17 @@ namespace Server.Forms
 
         public void CreateValue(string keyPath, RegValueData value)
         {
-            TreeNode key = GetTreeNode(keyPath);
+            var key = GetTreeNode(keyPath);
 
-            if (key != null )
+            if (key != null)
             {
-                List<RegValueData> valuesFromNode = ((RegValueData[])key.Tag).ToList();
+                var valuesFromNode = ((RegValueData[])key.Tag).ToList();
                 valuesFromNode.Add(value);
                 key.Tag = valuesFromNode.ToArray();
 
                 if (tvRegistryDirectory.SelectedNode == key)
                 {
-                    RegistryValueLstItem item = new RegistryValueLstItem(value);
+                    var item = new RegistryValueLstItem(value);
                     lstRegistryValues.Items.Add(item);
                     //Unselect all
                     lstRegistryValues.SelectedIndices.Clear();
@@ -180,7 +203,7 @@ namespace Server.Forms
 
         public void DeleteValue(string keyPath, string valueName)
         {
-            TreeNode key = GetTreeNode(keyPath);
+            var key = GetTreeNode(keyPath);
 
             if (key != null)
             {
@@ -196,10 +219,10 @@ namespace Server.Forms
                 {
                     var regValue = ((RegValueData[])key.Tag).First(item => item.Name == valueName);
 
-                    if(tvRegistryDirectory.SelectedNode == key)
+                    if (tvRegistryDirectory.SelectedNode == key)
                     {
                         var valueItem = lstRegistryValues.Items.Cast<RegistryValueLstItem>()
-                                                     .SingleOrDefault(item => item.Name == valueName);
+                            .SingleOrDefault(item => item.Name == valueName);
                         if (valueItem != null)
                             valueItem.Data = regValue.Kind.RegistryTypeToString(null);
                     }
@@ -211,7 +234,7 @@ namespace Server.Forms
 
         public void RenameValue(string keyPath, string oldName, string newName)
         {
-            TreeNode key = GetTreeNode(keyPath);
+            var key = GetTreeNode(keyPath);
 
             if (key != null)
             {
@@ -221,7 +244,7 @@ namespace Server.Forms
                 if (tvRegistryDirectory.SelectedNode == key)
                 {
                     var valueItem = lstRegistryValues.Items.Cast<RegistryValueLstItem>()
-                                                     .SingleOrDefault(item => item.Name == oldName);              
+                        .SingleOrDefault(item => item.Name == oldName);
                     if (valueItem != null)
                         valueItem.RegName = newName;
                 }
@@ -232,7 +255,7 @@ namespace Server.Forms
 
         public void ChangeValue(string keyPath, RegValueData value)
         {
-            TreeNode key = GetTreeNode(keyPath);
+            var key = GetTreeNode(keyPath);
 
             if (key != null)
             {
@@ -242,7 +265,7 @@ namespace Server.Forms
                 if (tvRegistryDirectory.SelectedNode == key)
                 {
                     var valueItem = lstRegistryValues.Items.Cast<RegistryValueLstItem>()
-                                                     .SingleOrDefault(item => item.Name == value.Name);
+                        .SingleOrDefault(item => item.Name == value.Name);
                     if (valueItem != null)
                         valueItem.Data = RegValueHelper.RegistryValueToString(value);
                 }
@@ -261,7 +284,7 @@ namespace Server.Forms
         {
             selectedStripStatusLabel.Text = node.FullPath;
 
-            RegValueData[] ValuesFromNode = (RegValueData[])node.Tag;
+            var ValuesFromNode = (RegValueData[])node.Tag;
 
             PopulateLstRegistryValues(ValuesFromNode);
         }
@@ -274,13 +297,13 @@ namespace Server.Forms
             //Sort values
             values = (
                 from value in values
-                orderby value.Name ascending
+                orderby value.Name
                 select value
-                ).ToArray();
+            ).ToArray();
 
             foreach (var value in values)
             {
-                RegistryValueLstItem item = new RegistryValueLstItem(value);
+                var item = new RegistryValueLstItem(value);
                 lstRegistryValues.Items.Add(item);
             }
 
@@ -301,12 +324,13 @@ namespace Server.Forms
                 {
                     if (e.Node.Parent.Nodes.ContainsKey(e.Label))
                     {
-                        MessageBox.Show("Invalid label. \nA node with that label already exists.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Invalid label. \nA node with that label already exists.", "Warning",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         e.Node.BeginEdit();
                     }
                     else
                     {
-                        MsgPack msgpack = new MsgPack();
+                        var msgpack = new MsgPack();
                         msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                         msgpack.ForcePathObject("Command").AsString = "RenameRegistryKey";
                         msgpack.ForcePathObject("OldKeyName").AsString = e.Node.Name;
@@ -318,7 +342,8 @@ namespace Server.Forms
                 }
                 else
                 {
-                    MessageBox.Show("Invalid label. \nThe label cannot be blank.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Invalid label. \nThe label cannot be blank.", "Warning", MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     e.Node.BeginEdit();
                 }
             }
@@ -331,7 +356,7 @@ namespace Server.Forms
 
         private void tvRegistryDirectory_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
-            TreeNode parentNode = e.Node;
+            var parentNode = e.Node;
 
             // If nothing is there (yet).
             if (string.IsNullOrEmpty(parentNode.FirstNode.Name))
@@ -340,7 +365,7 @@ namespace Server.Forms
                 parentNode.Nodes.Clear();
 
 
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "LoadRegistryKey";
                 msgpack.ForcePathObject("RootKeyName").AsString = parentNode.FullPath;
@@ -361,7 +386,7 @@ namespace Server.Forms
                 tvRegistryDirectory.SelectedNode = e.Node;
 
                 //Display the context menu
-                Point pos = new Point(e.X, e.Y);
+                var pos = new Point(e.X, e.Y);
                 CreateTreeViewMenuStrip();
                 tv_ContextMenuStrip.Show(tvRegistryDirectory, pos);
             }
@@ -384,32 +409,34 @@ namespace Server.Forms
 
         private void CreateEditToolStrip()
         {
-            this.modifyToolStripMenuItem1.Visible =
-                this.modifyBinaryDataToolStripMenuItem1.Visible =
-                    this.modifyNewtoolStripSeparator.Visible = lstRegistryValues.Focused;
+            modifyToolStripMenuItem1.Visible =
+                modifyBinaryDataToolStripMenuItem1.Visible =
+                    modifyNewtoolStripSeparator.Visible = lstRegistryValues.Focused;
 
-            this.modifyToolStripMenuItem1.Enabled =
-                this.modifyBinaryDataToolStripMenuItem1.Enabled = lstRegistryValues.SelectedItems.Count == 1;
+            modifyToolStripMenuItem1.Enabled =
+                modifyBinaryDataToolStripMenuItem1.Enabled = lstRegistryValues.SelectedItems.Count == 1;
 
-            this.renameToolStripMenuItem2.Enabled = GetRenameState();
-            this.deleteToolStripMenuItem2.Enabled = GetDeleteState();
+            renameToolStripMenuItem2.Enabled = GetRenameState();
+            deleteToolStripMenuItem2.Enabled = GetDeleteState();
         }
 
-        private void  CreateTreeViewMenuStrip()
+        private void CreateTreeViewMenuStrip()
         {
-            this.renameToolStripMenuItem.Enabled = tvRegistryDirectory.SelectedNode.Parent != null;
+            renameToolStripMenuItem.Enabled = tvRegistryDirectory.SelectedNode.Parent != null;
 
-            this.deleteToolStripMenuItem.Enabled = tvRegistryDirectory.SelectedNode.Parent != null;
+            deleteToolStripMenuItem.Enabled = tvRegistryDirectory.SelectedNode.Parent != null;
         }
 
         private void CreateListViewMenuStrip()
         {
-            this.modifyToolStripMenuItem.Enabled =
-                this.modifyBinaryDataToolStripMenuItem.Enabled = lstRegistryValues.SelectedItems.Count == 1;
+            modifyToolStripMenuItem.Enabled =
+                modifyBinaryDataToolStripMenuItem.Enabled = lstRegistryValues.SelectedItems.Count == 1;
 
-            this.renameToolStripMenuItem1.Enabled = lstRegistryValues.SelectedItems.Count == 1 && !RegValueHelper.IsDefaultValue(lstRegistryValues.SelectedItems[0].Name);
+            renameToolStripMenuItem1.Enabled = lstRegistryValues.SelectedItems.Count == 1 &&
+                                               !RegValueHelper.IsDefaultValue(lstRegistryValues.SelectedItems[0].Name);
 
-            this.deleteToolStripMenuItem1.Enabled = tvRegistryDirectory.SelectedNode != null && lstRegistryValues.SelectedItems.Count > 0;
+            deleteToolStripMenuItem1.Enabled =
+                tvRegistryDirectory.SelectedNode != null && lstRegistryValues.SelectedItems.Count > 0;
         }
 
         #endregion
@@ -423,30 +450,21 @@ namespace Server.Forms
 
         private void menuStripExit_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
-        private void menuStripDelete_Click(object sender, EventArgs e) {
-            if(tvRegistryDirectory.Focused)
-            {
+        private void menuStripDelete_Click(object sender, EventArgs e)
+        {
+            if (tvRegistryDirectory.Focused)
                 deleteRegistryKey_Click(this, e);
-            }
-            else if (lstRegistryValues.Focused) 
-            {
-                deleteRegistryValue_Click(this, e);
-            }
+            else if (lstRegistryValues.Focused) deleteRegistryValue_Click(this, e);
         }
 
         private void menuStripRename_Click(object sender, EventArgs e)
         {
             if (tvRegistryDirectory.Focused)
-            {
                 renameRegistryKey_Click(this, e);
-            }
-            else if (lstRegistryValues.Focused)
-            {
-                renameRegistryValue_Click(this, e);
-            }
+            else if (lstRegistryValues.Focused) renameRegistryValue_Click(this, e);
         }
 
         #endregion
@@ -457,7 +475,7 @@ namespace Server.Forms
         {
             if (e.Button == MouseButtons.Right)
             {
-                Point pos = new Point(e.X, e.Y);
+                var pos = new Point(e.X, e.Y);
 
                 //Try to check if a item was clicked
                 if (lstRegistryValues.GetItemAt(pos.X, pos.Y) == null)
@@ -479,18 +497,19 @@ namespace Server.Forms
             if (e.Label != null && tvRegistryDirectory.SelectedNode != null)
             {
                 e.CancelEdit = true;
-                int index = e.Item;
+                var index = e.Item;
 
                 if (e.Label.Length > 0)
                 {
                     if (lstRegistryValues.Items.ContainsKey(e.Label))
                     {
-                        MessageBox.Show("Invalid label. \nA node with that label already exists.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Invalid label. \nA node with that label already exists.", "Warning",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         lstRegistryValues.Items[index].BeginEdit();
                         return;
                     }
 
-                    MsgPack msgpack = new MsgPack();
+                    var msgpack = new MsgPack();
                     msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                     msgpack.ForcePathObject("Command").AsString = "RenameRegistryValue";
                     msgpack.ForcePathObject("OldValueName").AsString = lstRegistryValues.Items[index].Name;
@@ -501,9 +520,9 @@ namespace Server.Forms
                 }
                 else
                 {
-                    MessageBox.Show("Invalid label. \nThe label cannot be blank.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Invalid label. \nThe label cannot be blank.", "Warning", MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     lstRegistryValues.Items[index].BeginEdit();
-
                 }
             }
             else
@@ -524,15 +543,15 @@ namespace Server.Forms
 
         private void createNewRegistryKey_Click(object sender, EventArgs e)
         {
-            if (!(tvRegistryDirectory.SelectedNode.IsExpanded) && tvRegistryDirectory.SelectedNode.Nodes.Count > 0)
+            if (!tvRegistryDirectory.SelectedNode.IsExpanded && tvRegistryDirectory.SelectedNode.Nodes.Count > 0)
             {
                 //Subscribe (wait for node to expand)
-                tvRegistryDirectory.AfterExpand += this.createRegistryKey_AfterExpand;
+                tvRegistryDirectory.AfterExpand += createRegistryKey_AfterExpand;
                 tvRegistryDirectory.SelectedNode.Expand();
             }
             else
             {
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "CreateRegistryKey";
                 msgpack.ForcePathObject("ParentPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
@@ -543,15 +562,15 @@ namespace Server.Forms
         private void deleteRegistryKey_Click(object sender, EventArgs e)
         {
             // prompt user to confirm delete
-            string msg = "Are you sure you want to permanently delete this key and all of its subkeys?";
-            string caption = "Confirm Key Delete";
+            var msg = "Are you sure you want to permanently delete this key and all of its subkeys?";
+            var caption = "Confirm Key Delete";
             var answer = MessageBox.Show(msg, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
             if (answer == DialogResult.Yes)
             {
-                string parentPath = tvRegistryDirectory.SelectedNode.Parent.FullPath;
+                var parentPath = tvRegistryDirectory.SelectedNode.Parent.FullPath;
 
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "DeleteRegistryKey";
                 msgpack.ForcePathObject("KeyName").AsString = tvRegistryDirectory.SelectedNode.Name;
@@ -573,11 +592,11 @@ namespace Server.Forms
             if (tvRegistryDirectory.SelectedNode != null)
             {
                 // request the creation of a new Registry value of type REG_SZ
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "CreateRegistryValue";
                 msgpack.ForcePathObject("KeyPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
-                msgpack.ForcePathObject("Kindstring").AsString = "1";//RegistryValueKind.String
+                msgpack.ForcePathObject("Kindstring").AsString = "1"; //RegistryValueKind.String
                 ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
             }
         }
@@ -587,11 +606,11 @@ namespace Server.Forms
             if (tvRegistryDirectory.SelectedNode != null)
             {
                 // request the creation of a new Registry value of type REG_BINARY
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "CreateRegistryValue";
                 msgpack.ForcePathObject("KeyPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
-                msgpack.ForcePathObject("Kindstring").AsString = "3";//RegistryValueKind.Binary
+                msgpack.ForcePathObject("Kindstring").AsString = "3"; //RegistryValueKind.Binary
                 ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
             }
         }
@@ -601,11 +620,11 @@ namespace Server.Forms
             if (tvRegistryDirectory.SelectedNode != null)
             {
                 // request the creation of a new Registry value of type REG_DWORD
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "CreateRegistryValue";
                 msgpack.ForcePathObject("KeyPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
-                msgpack.ForcePathObject("Kindstring").AsString = "4";//RegistryValueKind.DWord
+                msgpack.ForcePathObject("Kindstring").AsString = "4"; //RegistryValueKind.DWord
                 ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
             }
         }
@@ -615,11 +634,11 @@ namespace Server.Forms
             if (tvRegistryDirectory.SelectedNode != null)
             {
                 // request the creation of a new Registry value of type REG_QWORD
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "CreateRegistryValue";
                 msgpack.ForcePathObject("KeyPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
-                msgpack.ForcePathObject("Kindstring").AsString = "11";//RegistryValueKind.QWord
+                msgpack.ForcePathObject("Kindstring").AsString = "11"; //RegistryValueKind.QWord
                 ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
             }
         }
@@ -629,11 +648,11 @@ namespace Server.Forms
             if (tvRegistryDirectory.SelectedNode != null)
             {
                 // request the creation of a new Registry value of type REG_MULTI_SZ
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "CreateRegistryValue";
                 msgpack.ForcePathObject("KeyPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
-                msgpack.ForcePathObject("Kindstring").AsString = "7";//RegistryValueKind.MultiString
+                msgpack.ForcePathObject("Kindstring").AsString = "7"; //RegistryValueKind.MultiString
                 ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
             }
         }
@@ -643,11 +662,11 @@ namespace Server.Forms
             if (tvRegistryDirectory.SelectedNode != null)
             {
                 // request the creation of a new Registry value of type REG_EXPAND_SZ
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                 msgpack.ForcePathObject("Command").AsString = "CreateRegistryValue";
                 msgpack.ForcePathObject("KeyPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
-                msgpack.ForcePathObject("Kindstring").AsString = "2";//RegistryValueKind.ExpandString
+                msgpack.ForcePathObject("Kindstring").AsString = "2"; //RegistryValueKind.ExpandString
                 ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
             }
         }
@@ -659,32 +678,30 @@ namespace Server.Forms
         private void deleteRegistryValue_Click(object sender, EventArgs e)
         {
             //Prompt user to confirm delete
-            string msg = "Deleting certain registry values could cause system instability. Are you sure you want to permanently delete " + (lstRegistryValues.SelectedItems.Count == 1 ? "this value?": "these values?");
-            string caption = "Confirm Value Delete";
+            var msg =
+                "Deleting certain registry values could cause system instability. Are you sure you want to permanently delete " +
+                (lstRegistryValues.SelectedItems.Count == 1 ? "this value?" : "these values?");
+            var caption = "Confirm Value Delete";
             var answer = MessageBox.Show(msg, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
             if (answer == DialogResult.Yes)
-            {
                 foreach (var item in lstRegistryValues.SelectedItems)
-                {
                     if (item.GetType() == typeof(RegistryValueLstItem))
                     {
-                        RegistryValueLstItem registryValue = (RegistryValueLstItem) item;
-                        MsgPack msgpack = new MsgPack();
+                        var registryValue = (RegistryValueLstItem)item;
+                        var msgpack = new MsgPack();
                         msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                         msgpack.ForcePathObject("Command").AsString = "DeleteRegistryValue";
                         msgpack.ForcePathObject("KeyPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
                         msgpack.ForcePathObject("ValueName").AsString = registryValue.RegName;
                         ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
                     }
-                }
-            }
         }
 
         private void renameRegistryValue_Click(object sender, EventArgs e)
         {
-		    lstRegistryValues.LabelEdit = true;
-		    lstRegistryValues.SelectedItems[0].BeginEdit();
+            lstRegistryValues.LabelEdit = true;
+            lstRegistryValues.SelectedItems[0].BeginEdit();
         }
 
         private void modifyRegistryValue_Click(object sender, EventArgs e)
@@ -701,23 +718,13 @@ namespace Server.Forms
 
         #endregion
 
-        private void createRegistryKey_AfterExpand(object sender, TreeViewEventArgs e)
-        {
-            if (e.Node == tvRegistryDirectory.SelectedNode)
-            {
-                createNewRegistryKey_Click(this, e);
-
-                tvRegistryDirectory.AfterExpand -= createRegistryKey_AfterExpand;
-            }
-        }
-
         #region helper functions
 
         private bool GetDeleteState()
         {
             if (lstRegistryValues.Focused)
                 return lstRegistryValues.SelectedItems.Count > 0;
-            else if (tvRegistryDirectory.Focused && tvRegistryDirectory.SelectedNode != null)
+            if (tvRegistryDirectory.Focused && tvRegistryDirectory.SelectedNode != null)
                 return tvRegistryDirectory.SelectedNode.Parent != null;
             return false;
         }
@@ -725,8 +732,9 @@ namespace Server.Forms
         private bool GetRenameState()
         {
             if (lstRegistryValues.Focused)
-                return lstRegistryValues.SelectedItems.Count == 1 && !RegValueHelper.IsDefaultValue(lstRegistryValues.SelectedItems[0].Name);
-            else if (tvRegistryDirectory.Focused && tvRegistryDirectory.SelectedNode != null)
+                return lstRegistryValues.SelectedItems.Count == 1 &&
+                       !RegValueHelper.IsDefaultValue(lstRegistryValues.SelectedItems[0].Name);
+            if (tvRegistryDirectory.Focused && tvRegistryDirectory.SelectedNode != null)
                 return tvRegistryDirectory.SelectedNode.Parent != null;
             return false;
         }
@@ -752,19 +760,19 @@ namespace Server.Forms
 
         private void CreateEditForm(bool isBinary)
         {
-            string keyPath = tvRegistryDirectory.SelectedNode.FullPath;
-            string name = lstRegistryValues.SelectedItems[0].Name;
-            RegValueData value = ((RegValueData[])tvRegistryDirectory.SelectedNode.Tag).ToList().Find(item => item.Name == name);
+            var keyPath = tvRegistryDirectory.SelectedNode.FullPath;
+            var name = lstRegistryValues.SelectedItems[0].Name;
+            var value = ((RegValueData[])tvRegistryDirectory.SelectedNode.Tag).ToList().Find(item => item.Name == name);
 
             // any kind can be edited as binary
-            RegistryValueKind kind = isBinary ? RegistryValueKind.Binary : value.Kind;
+            var kind = isBinary ? RegistryValueKind.Binary : value.Kind;
 
             using (var frm = GetEditForm(value, kind))
             {
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
                     //ChangeRegistryValue(keyPath, (RegValueData) frm.Tag);
-                    MsgPack msgpack = new MsgPack();
+                    var msgpack = new MsgPack();
                     msgpack.ForcePathObject("Pac_ket").AsString = "regManager";
                     msgpack.ForcePathObject("Command").AsString = "ChangeRegistryValue";
                     //msgpack.ForcePathObject("KeyPath").AsString = tvRegistryDirectory.SelectedNode.FullPath;
@@ -775,22 +783,5 @@ namespace Server.Forms
         }
 
         #endregion
-
-        public void timer1_Tick(object sender, EventArgs e)
-        {
-            try
-            {
-                if (!ParentClient.TcpClient.Connected || !Client.TcpClient.Connected) this.Close();
-            }
-            catch { this.Close(); }
-        }
-
-        private void FormRegistryEditor_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            ThreadPool.QueueUserWorkItem((o) =>
-            {
-                Client?.Disconnected();
-            });
-        }
     }
 }

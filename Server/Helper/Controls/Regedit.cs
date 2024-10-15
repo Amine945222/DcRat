@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Microsoft.Win32;
 using static Server.Helper.RegistrySeeker;
 
@@ -9,11 +6,11 @@ namespace Server.Helper
 {
     public class RegValueHelper
     {
-        private static string DEFAULT_REG_VALUE = "(Default)";
+        private static readonly string DEFAULT_REG_VALUE = "(Default)";
 
         public static bool IsDefaultValue(string valueName)
         {
-            return String.IsNullOrEmpty(valueName);
+            return string.IsNullOrEmpty(valueName);
         }
 
         public static string GetName(string valueName)
@@ -26,7 +23,9 @@ namespace Server.Helper
             switch (value.Kind)
             {
                 case RegistryValueKind.Binary:
-                    return value.Data.Length > 0 ? BitConverter.ToString(value.Data).Replace("-", " ").ToLower() : "(zero-length binary value)";
+                    return value.Data.Length > 0
+                        ? BitConverter.ToString(value.Data).Replace("-", " ").ToLower()
+                        : "(zero-length binary value)";
                 case RegistryValueKind.MultiString:
                     return string.Join(" ", ByteConverter.ToStringArray(value.Data));
                 case RegistryValueKind.DWord:

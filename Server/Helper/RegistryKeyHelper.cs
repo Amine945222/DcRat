@@ -8,10 +8,10 @@ namespace Server.Helper
 {
     public static class RegistryKeyHelper
     {
-        private static string DEFAULT_VALUE = String.Empty;
+        private static readonly string DEFAULT_VALUE = string.Empty;
 
         /// <summary>
-        /// Adds a value to the registry key.
+        ///     Adds a value to the registry key.
         /// </summary>
         /// <param name="hive">Represents the possible values for a top-level node on a foreign machine.</param>
         /// <param name="path">The path to the registry key.</param>
@@ -19,11 +19,12 @@ namespace Server.Helper
         /// <param name="value">The value.</param>
         /// <param name="addQuotes">If set to True, adds quotes to the value.</param>
         /// <returns>True on success, else False.</returns>
-        public static bool AddRegistryKeyValue(RegistryHive hive, string path, string name, string value, bool addQuotes = false)
+        public static bool AddRegistryKeyValue(RegistryHive hive, string path, string name, string value,
+            bool addQuotes = false)
         {
             try
             {
-                using (RegistryKey key = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64).OpenWritableSubKeySafe(path))
+                using (var key = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64).OpenWritableSubKeySafe(path))
                 {
                     if (key == null) return false;
 
@@ -41,7 +42,7 @@ namespace Server.Helper
         }
 
         /// <summary>
-        /// Opens a read-only registry key.
+        ///     Opens a read-only registry key.
         /// </summary>
         /// <param name="hive">Represents the possible values for a top-level node on a foreign machine.</param>
         /// <param name="path">The path to the registry key.</param>
@@ -59,7 +60,7 @@ namespace Server.Helper
         }
 
         /// <summary>
-        /// Deletes the specified value from the registry key.
+        ///     Deletes the specified value from the registry key.
         /// </summary>
         /// <param name="hive">Represents the possible values for a top-level node on a foreign machine.</param>
         /// <param name="path">The path to the registry key.</param>
@@ -69,7 +70,7 @@ namespace Server.Helper
         {
             try
             {
-                using (RegistryKey key = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64).OpenWritableSubKeySafe(path))
+                using (var key = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64).OpenWritableSubKeySafe(path))
                 {
                     if (key == null) return false;
                     key.DeleteValue(name, true);
@@ -83,67 +84,62 @@ namespace Server.Helper
         }
 
         /// <summary>
-        /// Checks if the provided value is the default value
+        ///     Checks if the provided value is the default value
         /// </summary>
         /// <param name="valueName">The name of the value</param>
         /// <returns>True if default value, else False</returns>
         public static bool IsDefaultValue(string valueName)
         {
-            return String.IsNullOrEmpty(valueName);
+            return string.IsNullOrEmpty(valueName);
         }
 
         /// <summary>
-        /// Adds the default value to the list of values and returns them as an array. 
-        /// If default value already exists this function will only return the list as an array.
+        ///     Adds the default value to the list of values and returns them as an array.
+        ///     If default value already exists this function will only return the list as an array.
         /// </summary>
         /// <param name="values">The list with the values for which the default value should be added to</param>
         /// <returns>Array with all of the values including the default value</returns>
         public static RegValueData[] AddDefaultValue(List<RegValueData> values)
         {
-            if(!values.Any(value => IsDefaultValue(value.Name)))
-            {
-                values.Add(GetDefaultValue());
-            }
+            if (!values.Any(value => IsDefaultValue(value.Name))) values.Add(GetDefaultValue());
             return values.ToArray();
         }
 
         /// <summary>
-        /// Gets the default registry values
+        ///     Gets the default registry values
         /// </summary>
         /// <returns>A array with the default registry values</returns>
         public static RegValueData[] GetDefaultValues()
         {
-            return new[] {GetDefaultValue()};
+            return new[] { GetDefaultValue() };
         }
 
         public static RegValueData CreateRegValueData(string name, RegistryValueKind kind, object value = null)
         {
-            var newRegValue = new RegValueData {Name = name, Kind = kind};
+            var newRegValue = new RegValueData { Name = name, Kind = kind };
 
             if (value == null)
                 newRegValue.Data = new byte[] { };
             else
-            {
                 switch (newRegValue.Kind)
                 {
                     case RegistryValueKind.Binary:
-                        newRegValue.Data = (byte[]) value;
+                        newRegValue.Data = (byte[])value;
                         break;
                     case RegistryValueKind.MultiString:
-                        newRegValue.Data = ByteConverter.GetBytes((string[]) value);
+                        newRegValue.Data = ByteConverter.GetBytes((string[])value);
                         break;
                     case RegistryValueKind.DWord:
-                        newRegValue.Data = ByteConverter.GetBytes((uint) (int) value);
+                        newRegValue.Data = ByteConverter.GetBytes((uint)(int)value);
                         break;
                     case RegistryValueKind.QWord:
-                        newRegValue.Data = ByteConverter.GetBytes((ulong) (long) value);
+                        newRegValue.Data = ByteConverter.GetBytes((ulong)(long)value);
                         break;
                     case RegistryValueKind.String:
                     case RegistryValueKind.ExpandString:
-                        newRegValue.Data = ByteConverter.GetBytes((string) value);
+                        newRegValue.Data = ByteConverter.GetBytes((string)value);
                         break;
                 }
-            }
 
             return newRegValue;
         }

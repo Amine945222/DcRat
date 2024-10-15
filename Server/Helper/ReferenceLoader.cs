@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Helper
 {
@@ -18,7 +15,10 @@ namespace Server.Helper
                 var paths = assembly.GetReferencedAssemblies().Select(x => x.FullName).ToArray();
                 return paths;
             }
-            catch { return null; }
+            catch
+            {
+                return null;
+            }
         }
 
         public void AppDomainSetup(string assemblyPath)
@@ -27,21 +27,23 @@ namespace Server.Helper
             {
                 var settings = new AppDomainSetup
                 {
-                    ApplicationBase = AppDomain.CurrentDomain.BaseDirectory,
+                    ApplicationBase = AppDomain.CurrentDomain.BaseDirectory
                 };
                 var childDomain = AppDomain.CreateDomain(Guid.NewGuid().ToString(), null, settings);
 
                 var handle = Activator.CreateInstance(childDomain,
-                           typeof(ReferenceLoader).Assembly.FullName,
-                           typeof(ReferenceLoader).FullName,
-                           false, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, null, CultureInfo.CurrentCulture, new object[0]);
+                    typeof(ReferenceLoader).Assembly.FullName,
+                    typeof(ReferenceLoader).FullName,
+                    false, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, null,
+                    CultureInfo.CurrentCulture, new object[0]);
 
                 var loader = (ReferenceLoader)handle.Unwrap();
                 var paths = loader.LoadReferences(assemblyPath);
                 AppDomain.Unload(childDomain);
-                return;
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

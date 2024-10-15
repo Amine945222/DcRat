@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Security.Cryptography.X509Certificates;
 using System.IO;
 using System.IO.Compression;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using Server.Helper;
 
 namespace Server.Forms
 {
@@ -18,13 +19,14 @@ namespace Server.Forms
         {
             try
             {
-                string backup = Application.StartupPath + "\\BackupCertificate.zip";
+                var backup = Application.StartupPath + "\\BackupCertificate.zip";
                 if (File.Exists(backup))
                 {
-                    MessageBox.Show(this, "Found a zip backup, Extracting (BackupCertificate.zip)", "Certificate backup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(this, "Found a zip backup, Extracting (BackupCertificate.zip)",
+                        "Certificate backup", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     ZipFile.ExtractToDirectory(backup, Application.StartupPath);
                     Settings.ServerCertificate = new X509Certificate2(Settings.CertificatePath);
-                    this.Close();
+                    Close();
                 }
             }
             catch (Exception ex)
@@ -46,25 +48,30 @@ namespace Server.Forms
                 {
                     try
                     {
-                        string backup = Application.StartupPath + "\\BackupCertificate.zip";
-                        Settings.ServerCertificate = Helper.CreateCertificate.CreateCertificateAuthority(textBox1.Text, 1024);
-                        File.WriteAllBytes(Settings.CertificatePath, Settings.ServerCertificate.Export(X509ContentType.Pkcs12));
+                        var backup = Application.StartupPath + "\\BackupCertificate.zip";
+                        Settings.ServerCertificate = CreateCertificate.CreateCertificateAuthority(textBox1.Text, 1024);
+                        File.WriteAllBytes(Settings.CertificatePath,
+                            Settings.ServerCertificate.Export(X509ContentType.Pkcs12));
 
-                        using (ZipArchive archive = ZipFile.Open(backup, ZipArchiveMode.Create))
+                        using (var archive = ZipFile.Open(backup, ZipArchiveMode.Create))
                         {
-                            archive.CreateEntryFromFile(Settings.CertificatePath, Path.GetFileName(Settings.CertificatePath));
+                            archive.CreateEntryFromFile(Settings.CertificatePath,
+                                Path.GetFileName(Settings.CertificatePath));
                         }
+
                         Program.form1.listView1.BeginInvoke((MethodInvoker)(() =>
                         {
-                            MessageBox.Show(this, @"Remember to save the BackupCertificate.zip", "Certificate", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            this.Close();
+                            MessageBox.Show(this, @"Remember to save the BackupCertificate.zip", "Certificate",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            Close();
                         }));
                     }
                     catch (Exception ex)
                     {
                         Program.form1.listView1.BeginInvoke((MethodInvoker)(() =>
                         {
-                            MessageBox.Show(this, ex.Message, "Certificate", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            MessageBox.Show(this, ex.Message, "Certificate", MessageBoxButtons.OK,
+                                MessageBoxIcon.Exclamation);
                             button1.Text = "OK";
                             button1.Enabled = true;
                             textBox1.Enabled = true;
@@ -79,6 +86,5 @@ namespace Server.Forms
                 button1.Enabled = true;
             }
         }
-
     }
 }

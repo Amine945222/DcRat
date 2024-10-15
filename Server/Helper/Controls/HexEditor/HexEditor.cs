@@ -6,20 +6,20 @@ using System.Windows.Forms;
 namespace Server.Helper.HexEditor
 {
     /*
-    * Derived and Adapted from Bernhard Elbl 
-    * Be.HexEditor v1.6 (Last Update: Dec 27, 2013).
-    * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * This code (and the rest that is avaliable in the
-    * HexEditor-folder) has been derived from Bernhard
-    * ElblBe's Be.HexEditor v1.6, modifications have 
-    * been made to make it better fit the new application
-    * area. 
-    * First Modified by StingRaptor on Febuary 7, 2016
-    */
+     * Derived and Adapted from Bernhard Elbl
+     * Be.HexEditor v1.6 (Last Update: Dec 27, 2013).
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     * This code (and the rest that is avaliable in the
+     * HexEditor-folder) has been derived from Bernhard
+     * ElblBe's Be.HexEditor v1.6, modifications have
+     * been made to make it better fit the new application
+     * area.
+     * First Modified by StingRaptor on Febuary 7, 2016
+     */
     /* [Original License, ONLY for Current HexEditor Folder]
      * This license is applied only to the files in the current
      * HexEditor Folder
-     
+
      * The MIT License
 
         Copyright (c) 2011 Bernhard Elbl
@@ -43,173 +43,183 @@ namespace Server.Helper.HexEditor
         THE SOFTWARE.
     */
     /*
-    * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * Unmodified Source:
-    * http://sourceforge.net/projects/hexbox/?source=navbar
-    */
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     * Unmodified Source:
+     * http://sourceforge.net/projects/hexbox/?source=navbar
+     */
 
     public class HexEditor : Control
     {
-        #region Locks
+        #region EditView
 
-        private object _caretLock = new object();
-
-        private object _hexTableLock = new object();
+        private readonly EditView _editView;
 
         #endregion
 
         #region IKeyMouseEventHandlers
 
-        private IKeyMouseEventHandler _handler;
+        private readonly IKeyMouseEventHandler _handler;
 
         #endregion
 
-        #region EditView
+        #region Boundary Calculator
 
-        private EditView _editView;
+        private RectangleF GetLineCountBound(int index)
+        {
+            var ret = new RectangleF(
+                _recLineCount.X,
+                _recLineCount.Y + _recLineCount.Height * index,
+                _recLineCount.Width,
+                _recLineCount.Height
+            );
+
+            return ret;
+        }
+
+        #endregion
+
+        #region OnRezie
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+
+            UpdateRectanglePositioning();
+            Invalidate();
+        }
+
+        #endregion
+
+        #region Locks
+
+        private readonly object _caretLock = new object();
+
+        private readonly object _hexTableLock = new object();
 
         #endregion
 
         #region Fields
 
         /// <summary>
-        /// Contains all of the bytes that
-        /// are to be displayed in the 
-        /// HexEditor
+        ///     Contains all of the bytes that
+        ///     are to be displayed in the
+        ///     HexEditor
         /// </summary>
-        ByteCollection _hexTable;
+        private ByteCollection _hexTable;
 
         /// <summary>
-        /// Contains the type of counter
-        /// for the linecount
+        ///     Contains the type of counter
+        ///     for the linecount
         /// </summary>
-        string _lineCountCaps = "X";
+        private string _lineCountCaps = "X";
 
         /// <summary>
-        /// Contains the number of chars
-        /// to be used in the line count
+        ///     Contains the number of chars
+        ///     to be used in the line count
         /// </summary>
-        int _nrCharsLineCount = 4;
+        private readonly int _nrCharsLineCount = 4;
 
         /// <summary>
-        /// Contains the caret for the
-        /// control
+        ///     Contains the caret for the
+        ///     control
         /// </summary>
-        Caret _caret;
+        private readonly Caret _caret;
 
         #region Boundarys
 
         /// <summary>
-        /// Contains the bound for everything that
-        /// is to be displayed in the control
+        ///     Contains the bound for everything that
+        ///     is to be displayed in the control
         /// </summary>
-        Rectangle _recContent;
+        private Rectangle _recContent;
 
         /// <summary>
-        /// Contains the boundary for every 
-        /// line count for the control
+        ///     Contains the boundary for every
+        ///     line count for the control
         /// </summary>
-        Rectangle _recLineCount;
+        private Rectangle _recLineCount;
 
         #endregion
 
         #region String Format
 
         /// <summary>
-        /// Contains the format of the line count
-        /// string that is presented in this control
+        ///     Contains the format of the line count
+        ///     string that is presented in this control
         /// </summary>
-        StringFormat _stringFormat;
+        private readonly StringFormat _stringFormat;
 
         #endregion
 
         #region Byte specific
 
         /// <summary>
-        /// Contains the index of the first 
-        /// visible byte
+        ///     Contains the maximum bytes that
+        ///     can be visible horizontally
         /// </summary>
-        int _firstByte;
+        private int _maxBytesH;
 
         /// <summary>
-        /// Contains the index of the last 
-        /// visible byte
+        ///     Contains the maximum number of
+        ///     bytes that can be visible at a
+        ///     time.
         /// </summary>
-        int _lastByte;
+        private int _maxBytes;
 
         /// <summary>
-        /// Contains the maximum bytes that
-        /// can be visible horizontally
+        ///     Contains the maximum number of
+        ///     rows with bytes that are fully
+        ///     visible.
         /// </summary>
-        int _maxBytesH;
-
-        /// <summary>
-        /// Contains the maximum bytes that
-        /// can be visible vertically
-        /// </summary>
-        int _maxBytesV;
-
-        /// <summary>
-        /// Contains the maximum number of 
-        /// bytes that can be visible at a 
-        /// time.
-        /// </summary>
-        int _maxBytes;
-
-        /// <summary>
-        /// Contains the maximum number of 
-        /// rows with bytes that are fully 
-        /// visible.
-        /// </summary>
-        int _maxVisibleBytesV;
+        private int _maxVisibleBytesV;
 
         #endregion
 
         #region Scrollbar
 
         /// <summary>
-        /// Contains the vertical scroll
-        /// bar for the control
+        ///     Contains the vertical scroll
+        ///     bar for the control
         /// </summary>
-        VScrollBar _vScrollBar;
+        private readonly VScrollBar _vScrollBar;
 
         /// <summary>
-        /// Contains the with of the scrollbar
-        /// in pixels
+        ///     Contains the with of the scrollbar
+        ///     in pixels
         /// </summary>
-        int _vScrollBarWidth = 20;
+        private readonly int _vScrollBarWidth = 20;
 
         /// <summary>
-        /// Contains the current position of the 
-        /// scrollbar
+        ///     Contains the current position of the
+        ///     scrollbar
         /// </summary>
-        int _vScrollPos;
+        private int _vScrollPos;
 
         /// <summary>
-        /// Contains the maximum value that
-        /// the scrollbar can have
+        ///     Contains the maximum value that
+        ///     the scrollbar can have
         /// </summary>
-        int _vScrollMax;
+        private int _vScrollMax;
 
         /// <summary>
-        /// Contains the minimum value
-        /// that the scrollbar may have
+        ///     Contains the minimum value
+        ///     that the scrollbar may have
         /// </summary>
-        int _vScrollMin;
+        private int _vScrollMin;
 
         /// <summary>
-        /// Contains the value for the 
-        /// size of a  smallchange in the
-        /// scrollbar
+        ///     Contains the value for the
+        ///     size of a  smallchange in the
+        ///     scrollbar
         /// </summary>
-        int _vScrollSmall;
+        private int _vScrollSmall;
 
         /// <summary>
-        /// Contains the value for the 
-        /// size of a largechange in the
-        /// scrollbar
+        ///     Contains the value for the
+        ///     size of a largechange in the
+        ///     scrollbar
         /// </summary>
-        int _vScrollLarge;
+        private int _vScrollLarge;
 
         #endregion
 
@@ -219,7 +229,11 @@ namespace Server.Helper.HexEditor
 
         #region enums
 
-        public enum CaseStyle { LowerCase, UpperCase }
+        public enum CaseStyle
+        {
+            LowerCase,
+            UpperCase
+        }
 
         #endregion
 
@@ -238,17 +252,12 @@ namespace Server.Helper.HexEditor
         }
 
         //Hides the property Text that is not used for the control
-        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        [Browsable(false)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public override string Text
         {
-            get
-            {
-                return base.Text;
-            }
-            set
-            {
-                base.Text = value;
-            }
+            get => base.Text;
+            set => base.Text = value;
         }
 
         #endregion
@@ -274,6 +283,7 @@ namespace Server.Helper.HexEditor
 
                     _hexTable = new ByteCollection(value);
                 }
+
                 UpdateRectanglePositioning();
                 Invalidate();
             }
@@ -282,7 +292,7 @@ namespace Server.Helper.HexEditor
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SizeF CharSize
         {
-            get { return _charSize; }
+            get => _charSize;
             private set
             {
                 if (_charSize == value)
@@ -293,30 +303,35 @@ namespace Server.Helper.HexEditor
                 if (CharSizeChanged != null)
                     CharSizeChanged(this, EventArgs.Empty);
             }
-        }SizeF _charSize;
-
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public int MaxBytesV
-        {
-            get { return _maxBytesV; }
         }
 
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public int FirstVisibleByte
-        {
-            get { return _firstByte; }
-        }
+        private SizeF _charSize;
 
+        /// <summary>
+        ///     Contains the maximum bytes that
+        ///     can be visible vertically
+        /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public int LastVisibleByte
-        {
-            get { return _lastByte; }
-        }
+        public int MaxBytesV { get; private set; }
+
+        /// <summary>
+        ///     Contains the index of the first
+        ///     visible byte
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int FirstVisibleByte { get; private set; }
+
+        /// <summary>
+        ///     Contains the index of the last
+        ///     visible byte
+        /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int LastVisibleByte { get; private set; }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool VScrollBarHidden
         {
-            get { return _isVScrollHidden; }
+            get => _isVScrollHidden;
             set
             {
                 if (_isVScrollHidden == value)
@@ -332,20 +347,24 @@ namespace Server.Helper.HexEditor
                 UpdateRectanglePositioning();
                 Invalidate();
             }
-        }bool _isVScrollHidden = true;
+        }
+
+        private bool _isVScrollHidden = true;
 
         #endregion
 
         #region Visible
 
         /// <summary>
-        /// Contains the number of bytes to
-        /// display per line
+        ///     Contains the number of bytes to
+        ///     display per line
         /// </summary>
-        [DefaultValue(8), Category("Hex"), Description("Property that specifies the number of bytes to display per line.")]
+        [DefaultValue(8)]
+        [Category("Hex")]
+        [Description("Property that specifies the number of bytes to display per line.")]
         public int BytesPerLine
         {
-            get { return _bytesPerLine; }
+            get => _bytesPerLine;
             set
             {
                 if (_bytesPerLine == value)
@@ -355,17 +374,21 @@ namespace Server.Helper.HexEditor
                 UpdateRectanglePositioning();
                 Invalidate();
             }
-        }int _bytesPerLine = 8;
+        }
+
+        private int _bytesPerLine = 8;
 
 
         /// <summary>
-        /// Contains the margin between each
-        /// of the entitys
+        ///     Contains the margin between each
+        ///     of the entitys
         /// </summary>
-        [DefaultValue(10), Category("Hex"), Description("Property that specifies the margin between each of the entitys in the control.")]
+        [DefaultValue(10)]
+        [Category("Hex")]
+        [Description("Property that specifies the margin between each of the entitys in the control.")]
         public int EntityMargin
         {
-            get { return _entityMargin; }
+            get => _entityMargin;
             set
             {
                 if (_entityMargin == value)
@@ -375,16 +398,20 @@ namespace Server.Helper.HexEditor
                 UpdateRectanglePositioning();
                 Invalidate();
             }
-        }int _entityMargin = 10;
+        }
+
+        private int _entityMargin = 10;
 
         /// <summary>
-        /// Contains the type of border 
-        /// that is used for the control
+        ///     Contains the type of border
+        ///     that is used for the control
         /// </summary>
-        [DefaultValue(BorderStyle.Fixed3D), Category("Appearance"), Description("Indicates where the control should have a border.")]
+        [DefaultValue(BorderStyle.Fixed3D)]
+        [Category("Appearance")]
+        [Description("Indicates where the control should have a border.")]
         public BorderStyle BorderStyle
         {
-            get { return _borderStyle; }
+            get => _borderStyle;
             set
             {
                 if (_borderStyle == value)
@@ -397,17 +424,21 @@ namespace Server.Helper.HexEditor
                 UpdateRectanglePositioning();
                 Invalidate();
             }
-        }BorderStyle _borderStyle = BorderStyle.Fixed3D;
+        }
+
+        private BorderStyle _borderStyle = BorderStyle.Fixed3D;
 
         /// <summary>
-        /// Contains the color for the border 
-        /// that is used for the control 
-        /// (Only used when BorderStyle is FixedSingle)
+        ///     Contains the color for the border
+        ///     that is used for the control
+        ///     (Only used when BorderStyle is FixedSingle)
         /// </summary>
-        [DefaultValue(typeof(Color), "Empty"), Category("Appearance"), Description("Indicates the color to be used when displaying a FixedSingle border.")]
+        [DefaultValue(typeof(Color), "Empty")]
+        [Category("Appearance")]
+        [Description("Indicates the color to be used when displaying a FixedSingle border.")]
         public Color BorderColor
         {
-            get { return _borderColor; }
+            get => _borderColor;
             set
             {
                 if (BorderStyle != BorderStyle.FixedSingle || _borderColor == value)
@@ -416,16 +447,20 @@ namespace Server.Helper.HexEditor
                 _borderColor = value;
                 Invalidate();
             }
-        }Color _borderColor = Color.Empty;
+        }
+
+        private Color _borderColor = Color.Empty;
 
         /// <summary>
-        /// Contains the color of the selected
-        /// background area in the control
+        ///     Contains the color of the selected
+        ///     background area in the control
         /// </summary>
-        [DefaultValue(typeof(Color), "Blue"), Category("Hex"), Description("Property for the background color of the selected text areas.")]
+        [DefaultValue(typeof(Color), "Blue")]
+        [Category("Hex")]
+        [Description("Property for the background color of the selected text areas.")]
         public Color SelectionBackColor
         {
-            get { return _selectionBackColor; }
+            get => _selectionBackColor;
             set
             {
                 if (_selectionBackColor == value)
@@ -433,16 +468,20 @@ namespace Server.Helper.HexEditor
 
                 _selectionBackColor = value;
             }
-        }Color _selectionBackColor = Color.Blue;
+        }
+
+        private Color _selectionBackColor = Color.Blue;
 
         /// <summary>
-        /// Contains the color of the selected
-        /// foreground area in the control
+        ///     Contains the color of the selected
+        ///     foreground area in the control
         /// </summary>
-        [DefaultValue(typeof(Color), "White"), Category("Hex"), Description("Property for the foreground color of the selected text areas.")]
+        [DefaultValue(typeof(Color), "White")]
+        [Category("Hex")]
+        [Description("Property for the foreground color of the selected text areas.")]
         public Color SelectionForeColor
         {
-            get { return _selectionForeColor; }
+            get => _selectionForeColor;
             set
             {
                 if (_selectionForeColor == value)
@@ -450,16 +489,20 @@ namespace Server.Helper.HexEditor
 
                 _selectionForeColor = value;
             }
-        }Color _selectionForeColor = Color.White;
+        }
+
+        private Color _selectionForeColor = Color.White;
 
         /// <summary>
-        /// Contains the case type for the
-        /// line counter
+        ///     Contains the case type for the
+        ///     line counter
         /// </summary>
-        [DefaultValue(CaseStyle.UpperCase), Category("Hex"), Description("Property for the case type to use on the line counter.")]
+        [DefaultValue(CaseStyle.UpperCase)]
+        [Category("Hex")]
+        [Description("Property for the case type to use on the line counter.")]
         public CaseStyle LineCountCaseStyle
         {
-            get { return _lineCountCaseStyle; }
+            get => _lineCountCaseStyle;
             set
             {
                 if (_lineCountCaseStyle == value)
@@ -474,16 +517,20 @@ namespace Server.Helper.HexEditor
 
                 Invalidate();
             }
-        }CaseStyle _lineCountCaseStyle = CaseStyle.UpperCase;
+        }
+
+        private CaseStyle _lineCountCaseStyle = CaseStyle.UpperCase;
 
         /// <summary>
-        /// Contains the case type for the
-        /// hex view.
+        ///     Contains the case type for the
+        ///     hex view.
         /// </summary>
-        [DefaultValue(CaseStyle.UpperCase), Category("Hex"), Description("Property for the case type to use for the hexadecimal values view.")]
+        [DefaultValue(CaseStyle.UpperCase)]
+        [Category("Hex")]
+        [Description("Property for the case type to use for the hexadecimal values view.")]
         public CaseStyle HexViewCaseStyle
         {
-            get { return _hexViewCaseStyle; }
+            get => _hexViewCaseStyle;
             set
             {
                 if (_hexViewCaseStyle == value)
@@ -498,17 +545,21 @@ namespace Server.Helper.HexEditor
 
                 Invalidate();
             }
-        }CaseStyle _hexViewCaseStyle = CaseStyle.UpperCase;
+        }
+
+        private CaseStyle _hexViewCaseStyle = CaseStyle.UpperCase;
 
         /// <summary>
-        /// Property that contains if the
-        /// vertical scrollbar should be 
-        /// visible or not
+        ///     Property that contains if the
+        ///     vertical scrollbar should be
+        ///     visible or not
         /// </summary>
-        [DefaultValue(false), Category("Hex"), Description("Property for the visibility of the vertical scrollbar.")]
+        [DefaultValue(false)]
+        [Category("Hex")]
+        [Description("Property for the visibility of the vertical scrollbar.")]
         public bool VScrollBarVisisble
         {
-            get { return _isVScrollVisible; }
+            get => _isVScrollVisible;
             set
             {
                 if (_isVScrollVisible == value)
@@ -519,7 +570,9 @@ namespace Server.Helper.HexEditor
                 UpdateRectanglePositioning();
                 Invalidate();
             }
-        }bool _isVScrollVisible = false;
+        }
+
+        private bool _isVScrollVisible;
 
         #endregion
 
@@ -563,6 +616,7 @@ namespace Server.Helper.HexEditor
                     ScrollThumbTrack(e.NewValue - e.OldValue);
                     break;
             }
+
             Invalidate();
         }
 
@@ -624,6 +678,7 @@ namespace Server.Helper.HexEditor
                 case Keys.Shift | Keys.Down:
                     return true;
             }
+
             return base.IsInputKey(keyData);
         }
 
@@ -679,7 +734,7 @@ namespace Server.Helper.HexEditor
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (this.Focused)
+            if (Focused)
             {
                 if (_handler != null)
                     _handler.OnMouseDown(e);
@@ -692,7 +747,7 @@ namespace Server.Helper.HexEditor
             }
             else
             {
-                this.Focus();
+                Focus();
             }
 
             base.OnMouseDown(e);
@@ -700,8 +755,7 @@ namespace Server.Helper.HexEditor
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            if (this.Focused)
-            {
+            if (Focused)
                 if (_dragging)
                 {
                     if (_handler != null)
@@ -709,7 +763,6 @@ namespace Server.Helper.HexEditor
 
                     Invalidate();
                 }
-            }
 
             base.OnMouseMove(e);
         }
@@ -718,22 +771,18 @@ namespace Server.Helper.HexEditor
         {
             _dragging = false;
 
-            if (this.Focused)
-            {
+            if (Focused)
                 if (_handler != null)
                     _handler.OnMouseUp(e);
-            }
 
             base.OnMouseUp(e);
         }
 
         protected override void OnMouseDoubleClick(MouseEventArgs e)
         {
-            if (this.Focused)
-            {
+            if (Focused)
                 if (_handler != null)
                     _handler.OnMouseDoubleClick(e);
-            }
 
             base.OnMouseDoubleClick(e);
         }
@@ -881,8 +930,8 @@ namespace Server.Helper.HexEditor
 
         public void RemoveSelectedBytes()
         {
-            int index = SelectionStart;
-            int length = SelectionLength;
+            var index = SelectionStart;
+            var length = SelectionLength;
             if (length > 0)
             {
                 lock (_hexTableLock)
@@ -977,7 +1026,7 @@ namespace Server.Helper.HexEditor
 
         public void ScrollLineUp(int lines)
         {
-            if (_firstByte > 0)
+            if (FirstVisibleByte > 0)
             {
                 lines = lines > _vScrollPos ? _vScrollPos : lines;
                 //Scroll up
@@ -988,7 +1037,7 @@ namespace Server.Helper.HexEditor
                 //Update the Caret
                 if (CaretFocused)
                 {
-                    Point caretLocation = new Point(CaretPosX, CaretPosY);
+                    var caretLocation = new Point(CaretPosX, CaretPosY);
                     caretLocation.Y += _recLineCount.Height * lines;
 
                     lock (_caretLock)
@@ -1003,7 +1052,9 @@ namespace Server.Helper.HexEditor
         {
             if (_vScrollPos <= _vScrollMax - _vScrollLarge)
             {
-                lines = (lines + _vScrollPos) > (_vScrollMax - _vScrollLarge) ? (_vScrollMax - _vScrollLarge) - _vScrollPos + 1 : lines;
+                lines = lines + _vScrollPos > _vScrollMax - _vScrollLarge
+                    ? _vScrollMax - _vScrollLarge - _vScrollPos + 1
+                    : lines;
                 //Scroll up
                 _vScrollPos += _vScrollSmall * lines;
                 //Update the visible bytes
@@ -1012,14 +1063,14 @@ namespace Server.Helper.HexEditor
                 //Update the Caret
                 if (CaretFocused)
                 {
-                    Point caretLocation = new Point(CaretPosX, CaretPosY);
+                    var caretLocation = new Point(CaretPosX, CaretPosY);
                     caretLocation.Y -= _recLineCount.Height * lines;
 
                     lock (_caretLock)
                     {
                         _caret.SetCaretLocation(caretLocation);
                         if (caretLocation.Y < _recContent.Y)
-                            _caret.Hide(this.Handle);
+                            _caret.Hide(Handle);
                     }
                 }
             }
@@ -1031,17 +1082,13 @@ namespace Server.Helper.HexEditor
                 return;
 
             if (lines < 0)
-            {
-                ScrollLineUp((-1) * lines);
-            }
+                ScrollLineUp(-1 * lines);
             else
-            {
                 ScrollLineDown(lines);
-            }
         }
 
         /// <summary>
-        /// Performs a scroll to the given caretIndex
+        ///     Performs a scroll to the given caretIndex
         /// </summary>
         /// <param name="caretIndex">The caret index to scroll to</param>
         public Point ScrollToCaret(int caretIndex, Point position)
@@ -1053,27 +1100,22 @@ namespace Server.Helper.HexEditor
                 UpdateVisibleByteIndex();
                 UpdateScrollValues();
 
-                if (CaretFocused)
-                {
-                    position.Y = _recContent.Y;
-                }
+                if (CaretFocused) position.Y = _recContent.Y;
             }
             else if (position.Y > _maxVisibleBytesV * _recLineCount.Height)
             {
                 //Need to scroll down until caret is visible
-                _vScrollPos += ((position.Y) / _recLineCount.Height - (_maxVisibleBytesV - 1)) * _vScrollSmall;
+                _vScrollPos += (position.Y / _recLineCount.Height - (_maxVisibleBytesV - 1)) * _vScrollSmall;
 
-                if (_vScrollPos > (_vScrollMax - (_vScrollLarge - 1)))
-                    _vScrollPos = (_vScrollMax - (_vScrollLarge - 1));
+                if (_vScrollPos > _vScrollMax - (_vScrollLarge - 1))
+                    _vScrollPos = _vScrollMax - (_vScrollLarge - 1);
 
                 UpdateVisibleByteIndex();
                 UpdateScrollValues();
 
-                if (CaretFocused)
-                {
-                    position.Y = (_maxVisibleBytesV - 1) * _recLineCount.Height + _recContent.Y;
-                }
+                if (CaretFocused) position.Y = (_maxVisibleBytesV - 1) * _recLineCount.Height + _recContent.Y;
             }
+
             return position;
         }
 
@@ -1088,10 +1130,11 @@ namespace Server.Helper.HexEditor
 
             //Start by calculating the size of a char
             SizeF charSize;
-            using (var graphics = this.CreateGraphics())
+            using (var graphics = CreateGraphics())
             {
                 charSize = graphics.MeasureString("D", Font, 100, _stringFormat);
             }
+
             CharSize = new SizeF((float)Math.Ceiling(charSize.Width), (float)Math.Ceiling(charSize.Height));
 
             //Set the main content bounds (remove margins)
@@ -1127,15 +1170,16 @@ namespace Server.Helper.HexEditor
                 _vScrollBar.Height = _recContent.Height;
             }
 
-            _recLineCount = new Rectangle(_recContent.X, _recContent.Y, (int)(_charSize.Width * 4), (int)(_charSize.Height) - 2);
+            _recLineCount = new Rectangle(_recContent.X, _recContent.Y, (int)(_charSize.Width * 4),
+                (int)_charSize.Height - 2);
 
             _editView.Update(_recLineCount.X + _recLineCount.Width + _entityMargin / 2, _recContent);
 
             //Calculate needed maximums for the bytes
             _maxBytesH = _bytesPerLine;
-            _maxBytesV = (int)Math.Ceiling(((float)_recContent.Height / (float)_recLineCount.Height));
-            _maxBytes = _maxBytesH * _maxBytesV;
-            _maxVisibleBytesV = (int)Math.Floor(((float)_recContent.Height / (float)_recLineCount.Height));
+            MaxBytesV = (int)Math.Ceiling(_recContent.Height / (float)_recLineCount.Height);
+            _maxBytes = _maxBytesH * MaxBytesV;
+            _maxVisibleBytesV = (int)Math.Floor(_recContent.Height / (float)_recLineCount.Height);
 
             UpdateScrollBarSize();
         }
@@ -1144,13 +1188,13 @@ namespace Server.Helper.HexEditor
         {
             if (_hexTable.Length == 0)
             {
-                _firstByte = 0;
-                _lastByte = 0;
+                FirstVisibleByte = 0;
+                LastVisibleByte = 0;
             }
             else
             {
-                _firstByte = _vScrollPos * _maxBytesH;
-                _lastByte = (int)Math.Min(HexTableLength, _firstByte + _maxBytes);
+                FirstVisibleByte = _vScrollPos * _maxBytesH;
+                LastVisibleByte = Math.Min(HexTableLength, FirstVisibleByte + _maxBytes);
             }
         }
 
@@ -1178,15 +1222,15 @@ namespace Server.Helper.HexEditor
             if (VScrollBarVisisble && _maxVisibleBytesV > 0 && _maxBytesH > 0)
             {
                 //Holds the size of a page (number of rows per page)
-                int largeScroll = _maxVisibleBytesV;
+                var largeScroll = _maxVisibleBytesV;
                 //Holds the row size (1)
-                int smallScroll = 1;
+                var smallScroll = 1;
                 //Holds the minimum value of the scrollbar
-                int minScroll = 0;
+                var minScroll = 0;
                 //Holds the maximum value of the scrollbar
-                int maxScroll = HexTableLength / _maxBytesH;
+                var maxScroll = HexTableLength / _maxBytesH;
                 //Holds the current positon on the scrollbar
-                int posScroll = _firstByte / _maxBytesH;
+                var posScroll = FirstVisibleByte / _maxBytesH;
 
                 if (largeScroll != _vScrollLarge || smallScroll != _vScrollSmall)
                 {
@@ -1224,7 +1268,8 @@ namespace Server.Helper.HexEditor
 
         public HexEditor()
             : this(new ByteCollection())
-        { }
+        {
+        }
 
         public HexEditor(ByteCollection collection)
         {
@@ -1238,7 +1283,7 @@ namespace Server.Helper.HexEditor
 
             //Set the vertical scrollbar
             _vScrollBar = new VScrollBar();
-            _vScrollBar.Scroll += new ScrollEventHandler(OnVScrollBarScroll);
+            _vScrollBar.Scroll += OnVScrollBarScroll;
 
             //Redraw whenever the control is resized
             SetStyle(ControlStyles.ResizeRedraw, true);
@@ -1251,31 +1296,15 @@ namespace Server.Helper.HexEditor
 
             //Handle initialization of Caret
             _caret = new Caret(this);
-            _caret.SelectionStartChanged += new EventHandler(CaretSelectionStartChanged);
-            _caret.SelectionLengthChanged += new EventHandler(CaretSelectionLengthChanged);
+            _caret.SelectionStartChanged += CaretSelectionStartChanged;
+            _caret.SelectionLengthChanged += CaretSelectionLengthChanged;
 
             //Create the needed edit view
             _editView = new EditView(this);
             _handler = _editView;
 
             //Set defualt cursor
-            this.Cursor = Cursors.IBeam;
-        }
-
-        #endregion
-
-        #region Boundary Calculator
-
-        private RectangleF GetLineCountBound(int index)
-        {
-            RectangleF ret = new RectangleF(
-                _recLineCount.X,
-                _recLineCount.Y + (_recLineCount.Height * index),
-                _recLineCount.Width,
-                _recLineCount.Height
-                );
-
-            return ret;
+            Cursor = Cursors.IBeam;
         }
 
         #endregion
@@ -1284,18 +1313,17 @@ namespace Server.Helper.HexEditor
 
         protected override void OnPaintBackground(PaintEventArgs pevent)
         {
-
             if (BorderStyle == BorderStyle.Fixed3D)
             {
-                SolidBrush brush = new SolidBrush(BackColor);
-                Rectangle rect = ClientRectangle;
+                var brush = new SolidBrush(BackColor);
+                var rect = ClientRectangle;
                 pevent.Graphics.FillRectangle(brush, rect);
                 ControlPaint.DrawBorder3D(pevent.Graphics, ClientRectangle, Border3DStyle.Sunken);
             }
             else if (BorderStyle == BorderStyle.FixedSingle)
             {
-                SolidBrush brush = new SolidBrush(BackColor);
-                Rectangle rect = ClientRectangle;
+                var brush = new SolidBrush(BackColor);
+                var rect = ClientRectangle;
                 pevent.Graphics.FillRectangle(brush, rect);
                 ControlPaint.DrawBorder(pevent.Graphics, ClientRectangle, BorderColor, ButtonBorderStyle.Solid);
             }
@@ -1309,51 +1337,35 @@ namespace Server.Helper.HexEditor
         {
             base.OnPaint(e);
 
-            Region r = new Region(ClientRectangle);
+            var r = new Region(ClientRectangle);
             r.Exclude(_recContent);
             e.Graphics.ExcludeClip(r);
 
             UpdateVisibleByteIndex();
 
-            PaintLineCount(e.Graphics, _firstByte, _lastByte);
+            PaintLineCount(e.Graphics, FirstVisibleByte, LastVisibleByte);
 
-            _editView.Paint(e.Graphics, _firstByte, _lastByte);
+            _editView.Paint(e.Graphics, FirstVisibleByte, LastVisibleByte);
         }
 
         private void PaintLineCount(Graphics g, int startIndex, int lastIndex)
         {
-            SolidBrush brush = new SolidBrush(ForeColor);
+            var brush = new SolidBrush(ForeColor);
 
-            for (int i = 0; ((i * _maxBytesH) + startIndex) <= lastIndex; i++)
+            for (var i = 0; i * _maxBytesH + startIndex <= lastIndex; i++)
             {
-                RectangleF drawSurface = GetLineCountBound(i);
-                string lineCount = (startIndex + (i * _maxBytesH)).ToString(_lineCountCaps);
+                var drawSurface = GetLineCountBound(i);
+                var lineCount = (startIndex + i * _maxBytesH).ToString(_lineCountCaps);
                 //Calculate how many '0' need to be added to the current count
-                int zeros = _nrCharsLineCount - lineCount.Length;
+                var zeros = _nrCharsLineCount - lineCount.Length;
 
                 string lineStr;
                 if (zeros > -1)
-                {
                     lineStr = new string('0', zeros) + lineCount;
-                }
                 else
-                {
                     lineStr = new string('~', _nrCharsLineCount);
-                }
                 g.DrawString(lineStr, Font, brush, drawSurface, _stringFormat);
             }
-        }
-
-        #endregion
-
-        #region OnRezie
-
-        protected override void OnResize(EventArgs e)
-        {
-            base.OnResize(e);
-
-            UpdateRectanglePositioning();
-            Invalidate();
         }
 
         #endregion

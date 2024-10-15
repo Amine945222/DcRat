@@ -1,20 +1,11 @@
 ﻿using System;
-using System.Data;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
-using System.Security.Cryptography;
-using System.Text;
-using System.Diagnostics;
-using System.Security.Principal;
-using System.IO;
-using System.Reflection;
 
 namespace Plugin
 {
-    class Recorvery
+    internal class Recorvery
     {
         public static string totaltokens = "";
+
         public static void Recorver()
         {
             try

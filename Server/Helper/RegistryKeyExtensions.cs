@@ -1,12 +1,10 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using Microsoft.Win32;
 
 namespace Server.Helper
 {
     /// <summary>
-    /// Provides extensions for registry key and value operations.
+    ///     Provides extensions for registry key and value operations.
     /// </summary>
     public static class RegistryKeyExtensions
     {
@@ -18,13 +16,17 @@ namespace Server.Helper
             switch (valueKind)
             {
                 case RegistryValueKind.Binary:
-                    return ((byte[])valueData).Length > 0 ? BitConverter.ToString((byte[])valueData).Replace("-", " ").ToLower() : "(zero-length binary value)";
+                    return ((byte[])valueData).Length > 0
+                        ? BitConverter.ToString((byte[])valueData).Replace("-", " ").ToLower()
+                        : "(zero-length binary value)";
                 case RegistryValueKind.MultiString:
                     return string.Join(" ", (string[])valueData);
-                case RegistryValueKind.DWord:   //Convert with hexadecimal before int
-                    return String.Format("0x{0} ({1})", ((uint)((int)valueData)).ToString("x8"), ((uint)((int)valueData)).ToString());
+                case RegistryValueKind.DWord: //Convert with hexadecimal before int
+                    return string.Format("0x{0} ({1})", ((uint)(int)valueData).ToString("x8"),
+                        ((uint)(int)valueData).ToString());
                 case RegistryValueKind.QWord:
-                    return String.Format("0x{0} ({1})", ((ulong)((long)valueData)).ToString("x8"), ((ulong)((long)valueData)).ToString());
+                    return string.Format("0x{0} ({1})", ((ulong)(long)valueData).ToString("x8"),
+                        ((ulong)(long)valueData).ToString());
                 case RegistryValueKind.String:
                 case RegistryValueKind.ExpandString:
                     return valueData.ToString();

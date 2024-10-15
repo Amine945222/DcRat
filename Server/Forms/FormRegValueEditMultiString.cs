@@ -1,13 +1,6 @@
-﻿using Server.Helper;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using System.Windows.Forms;
+using Server.Helper;
 using static Server.Helper.RegistrySeeker;
 
 namespace Server.Forms
@@ -22,16 +15,18 @@ namespace Server.Forms
 
             InitializeComponent();
 
-            this.valueNameTxtBox.Text = value.Name;
-            this.valueDataTxtBox.Text = string.Join("\r\n", Helper.ByteConverter.ToStringArray(value.Data));
+            valueNameTxtBox.Text = value.Name;
+            valueDataTxtBox.Text = string.Join("\r\n", ByteConverter.ToStringArray(value.Data));
         }
 
         private void okButton_Click(object sender, EventArgs e)
         {
-            _value.Data = Helper.ByteConverter.GetBytes(valueDataTxtBox.Text.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries));
-            this.Tag = _value;
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+            _value.Data =
+                ByteConverter.GetBytes(valueDataTxtBox.Text.Split(new[] { "\r\n" },
+                    StringSplitOptions.RemoveEmptyEntries));
+            Tag = _value;
+            DialogResult = DialogResult.OK;
+            Close();
         }
     }
 }

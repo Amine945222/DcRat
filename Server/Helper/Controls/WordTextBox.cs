@@ -6,32 +6,36 @@ namespace Server.Helper
 {
     public partial class WordTextBox : TextBox
     {
-        private bool isHexNumber;
-        private WordType type;
-
         public enum WordType
         {
             DWORD,
             QWORD
         }
+
+        private bool isHexNumber;
+        private WordType type;
+
+        public WordTextBox()
+        {
+            InitializeComponent();
+            base.MaxLength = 8;
+        }
+
         public override int MaxLength
         {
-            get
-            {
-                return base.MaxLength;
-            }
+            get => base.MaxLength;
             set { }
         }
 
         public bool IsHexNumber
         {
-            get { return isHexNumber; }
+            get => isHexNumber;
             set
             {
                 if (isHexNumber == value)
                     return;
 
-                if(value)
+                if (value)
                 {
                     if (Type == WordType.DWORD)
                         Text = UIntValue.ToString("x");
@@ -54,7 +58,7 @@ namespace Server.Helper
 
         public WordType Type
         {
-            get { return type; }
+            get => type;
             set
             {
                 if (type == value)
@@ -72,16 +76,15 @@ namespace Server.Helper
             {
                 try
                 {
-                    if (String.IsNullOrEmpty(Text))
+                    if (string.IsNullOrEmpty(Text))
                         return 0;
-                    else if (IsHexNumber)
-                        return UInt32.Parse(Text, NumberStyles.HexNumber);
-                    else
-                        return UInt32.Parse(Text);
+                    if (IsHexNumber)
+                        return uint.Parse(Text, NumberStyles.HexNumber);
+                    return uint.Parse(Text);
                 }
                 catch (Exception)
                 {
-                    return UInt32.MaxValue;
+                    return uint.MaxValue;
                 }
             }
         }
@@ -92,36 +95,26 @@ namespace Server.Helper
             {
                 try
                 {
-                    if (String.IsNullOrEmpty(Text))
+                    if (string.IsNullOrEmpty(Text))
                         return 0;
-                    else if (IsHexNumber)
-                        return UInt64.Parse(Text, NumberStyles.HexNumber);
-                    else
-                        return UInt64.Parse(Text);
+                    if (IsHexNumber)
+                        return ulong.Parse(Text, NumberStyles.HexNumber);
+                    return ulong.Parse(Text);
                 }
                 catch (Exception)
                 {
-                    return UInt64.MaxValue;
+                    return ulong.MaxValue;
                 }
             }
         }
 
         public bool IsConversionValid()
         {
-            if (String.IsNullOrEmpty(Text))
+            if (string.IsNullOrEmpty(Text))
                 return true;
 
-            if (!IsHexNumber)
-            {
-                return ConvertToHex();
-            }
+            if (!IsHexNumber) return ConvertToHex();
             return true;
-        }
-
-        public WordTextBox()
-        {
-            InitializeComponent();
-            base.MaxLength = 8;
         }
 
         protected override void OnKeyPress(KeyPressEventArgs e)
@@ -132,14 +125,14 @@ namespace Server.Helper
 
         private bool IsValidChar(char ch)
         {
-            return (Char.IsControl(ch) ||
-                    Char.IsDigit(ch) ||
-                    (IsHexNumber && Char.IsLetter(ch) && Char.ToLower(ch) <= 'f'));
+            return char.IsControl(ch) ||
+                   char.IsDigit(ch) ||
+                   (IsHexNumber && char.IsLetter(ch) && char.ToLower(ch) <= 'f');
         }
 
         private void UpdateMaxLength()
         {
-            if(Type == WordType.DWORD)
+            if (Type == WordType.DWORD)
             {
                 if (IsHexNumber)
                     base.MaxLength = 8;
@@ -161,9 +154,9 @@ namespace Server.Helper
             try
             {
                 if (Type == WordType.DWORD)
-                    UInt32.Parse(Text);
+                    uint.Parse(Text);
                 else
-                    UInt64.Parse(Text);
+                    ulong.Parse(Text);
                 return true;
             }
             catch (Exception)

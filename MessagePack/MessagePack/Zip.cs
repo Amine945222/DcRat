@@ -10,12 +10,12 @@ namespace MessagePackLib.MessagePack
         {
             using (var source = new MemoryStream(input))
             {
-                byte[] lengthBytes = new byte[4];
+                var lengthBytes = new byte[4];
                 source.Read(lengthBytes, 0, 4);
 
                 var length = BitConverter.ToInt32(lengthBytes, 0);
                 using (var decompressionStream = new GZipStream(source,
-                    CompressionMode.Decompress))
+                           CompressionMode.Decompress))
                 {
                     var result = new byte[length];
                     decompressionStream.Read(result, 0, length);
@@ -32,12 +32,12 @@ namespace MessagePackLib.MessagePack
                 result.Write(lengthBytes, 0, 4);
 
                 using (var compressionStream = new GZipStream(result,
-                    CompressionMode.Compress))
+                           CompressionMode.Compress))
                 {
                     compressionStream.Write(input, 0, input.Length);
                     compressionStream.Flush();
-
                 }
+
                 return result.ToArray();
             }
         }

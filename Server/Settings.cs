@@ -1,9 +1,7 @@
-﻿using Server.Algorithm;
-using Server.Connection;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
+using Server.Connection;
 
 namespace Server
 {
@@ -11,9 +9,6 @@ namespace Server
     {
         public static List<string> Blocked = new List<string>();
         public static object LockBlocked = new object();
-
-        public static long SentValue { get; set; }
-        public static long ReceivedValue { get; set; }
         public static object LockReceivedSendValue = new object();
 
 
@@ -26,5 +21,8 @@ namespace Server
         public static bool ReportWindow = false;
         public static List<Clients> ReportWindowClients = new List<Clients>();
         public static object LockReportWindowClients = new object();
+
+        public static long SentValue { get; set; }
+        public static long ReceivedValue { get; set; }
     }
 }

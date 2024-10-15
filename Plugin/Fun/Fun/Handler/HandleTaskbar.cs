@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-
 
 namespace Plugin.Handler
 {
@@ -20,10 +16,10 @@ namespace Plugin.Handler
             {
                 SetVisibility(true);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Packet.Error(ex.Message);
-            }            
+            }
         }
 
         public void Hide()
@@ -40,19 +36,16 @@ namespace Plugin.Handler
 
         private static void SetVisibility(bool show)
         {
-            IntPtr taskBarWnd = Native.FindWindow("Shell_TrayWnd", null);
+            var taskBarWnd = Native.FindWindow("Shell_TrayWnd", null);
 
-            IntPtr startWnd = Native.FindWindowEx(IntPtr.Zero, IntPtr.Zero, (IntPtr)0xC017, "Start");
+            var startWnd = Native.FindWindowEx(IntPtr.Zero, IntPtr.Zero, (IntPtr)0xC017, "Start");
 
 
             if (startWnd == IntPtr.Zero)
             {
                 startWnd = Native.FindWindow("Button", null);
 
-                if (startWnd == IntPtr.Zero)
-                {
-                    startWnd = GetVistaStartMenuWnd(taskBarWnd);
-                }
+                if (startWnd == IntPtr.Zero) startWnd = GetVistaStartMenuWnd(taskBarWnd);
             }
 
             Native.ShowWindow(taskBarWnd, show ? ShowWindowCommands.Show : ShowWindowCommands.Hide);
@@ -64,29 +57,24 @@ namespace Plugin.Handler
             uint procId;
             Native.GetWindowThreadProcessId(taskBarWnd, out procId);
 
-            Process p = Process.GetProcessById((int)procId);
+            var p = Process.GetProcessById((int)procId);
 
-            foreach (ProcessThread t in p.Threads)
-            {
-                Native.EnumThreadWindows(t.Id, MyEnumThreadWindowsProc, IntPtr.Zero);
-            }
+            foreach (ProcessThread t in p.Threads) Native.EnumThreadWindows(t.Id, MyEnumThreadWindowsProc, IntPtr.Zero);
 
             return vistaStartMenuWnd;
         }
+
         private static bool MyEnumThreadWindowsProc(IntPtr hWnd, IntPtr lParam)
         {
-            StringBuilder buffer = new StringBuilder(256);
+            var buffer = new StringBuilder(256);
             if (Native.GetWindowText(hWnd, buffer, buffer.Capacity) > 0)
-            {
                 if (buffer.ToString() == VistaStartMenuCaption)
                 {
                     vistaStartMenuWnd = hWnd;
                     return false;
                 }
-            }
+
             return true;
         }
     }
-
-
 }

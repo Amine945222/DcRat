@@ -1,16 +1,9 @@
-﻿using Server.Forms;
-using Server.MessagePack;
-using Server.Connection;
-using System;
-using System.Drawing;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
-using System.Threading;
-using System.Threading.Tasks;
-using Server.Helper;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Linq;
+using Server.Connection;
+using Server.MessagePack;
 
 namespace Server.Handle_Packet
 {
@@ -20,8 +13,9 @@ namespace Server.Handle_Packet
         {
             try
             {
-                string tempPath = Path.Combine(Application.StartupPath, "ClientsFolder\\" + unpack_msgpack.ForcePathObject("ID").AsString + "\\Information");
-                string fullPath = tempPath + $"\\Information.txt";
+                var tempPath = Path.Combine(Application.StartupPath,
+                    "ClientsFolder\\" + unpack_msgpack.ForcePathObject("ID").AsString + "\\Information");
+                var fullPath = tempPath + "\\Information.txt";
                 if (!Directory.Exists(tempPath))
                     Directory.CreateDirectory(tempPath);
                 File.WriteAllText(fullPath, unpack_msgpack.ForcePathObject("InforMation").AsString);

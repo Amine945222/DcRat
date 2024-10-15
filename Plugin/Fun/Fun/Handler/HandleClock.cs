@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-
 
 namespace Plugin.Handler
 {
@@ -33,6 +27,7 @@ namespace Plugin.Handler
                 Packet.Error(ex.Message);
             }
         }
+
         public static void SetClockVisibility(bool visible)
         {
             var hWnd = Native.GetDlgItem(Native.FindWindow("Shell_TrayWnd", null), 0x12F);
@@ -40,6 +35,4 @@ namespace Plugin.Handler
             Native.ShowWindow(hWnd, visible ? ShowWindowCommands.Show : ShowWindowCommands.Hide);
         }
     }
-
-
 }

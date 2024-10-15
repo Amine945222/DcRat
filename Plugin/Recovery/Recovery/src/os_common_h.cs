@@ -1,44 +1,42 @@
-using System.Diagnostics;
-
 namespace CS_SQLite3
 {
-  public partial class CSSQLite
-  {
-    /*
-    ** 2004 May 22
-    **
-    ** The author disclaims copyright to this source code.  In place of
-    ** a legal notice, here is a blessing:
-    **
-    **    May you do good and not evil.
-    **    May you find forgiveness for yourself and forgive others.
-    **    May you share freely, never taking more than you give.
-    **
-    ******************************************************************************
-    **
-    ** This file contains macros and a little bit of code that is common to
-    ** all of the platform-specific files (os_*.c) and is #included into those
-    ** files.
-    **
-    ** This file should be #included by the os_*.c files only.  It is not a
-    ** general purpose header file.
-    **
-    ** $Id: os_common.h,v 1.38 2009/02/24 18:40:50 danielk1977 Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    */
-    //#if !_OS_COMMON_H_
-    //#define _OS_COMMON_H_
-    /*
-    ** At least two bugs have slipped in because we changed the MEMORY_DEBUG
-    ** macro to SQLITE_DEBUG and some older makefiles have not yet made the
-    ** switch.  The following code should catch this problem at compile-time.
-    */
+    public partial class CSSQLite
+    {
+        /*
+         ** 2004 May 22
+         **
+         ** The author disclaims copyright to this source code.  In place of
+         ** a legal notice, here is a blessing:
+         **
+         **    May you do good and not evil.
+         **    May you find forgiveness for yourself and forgive others.
+         **    May you share freely, never taking more than you give.
+         **
+         ******************************************************************************
+         **
+         ** This file contains macros and a little bit of code that is common to
+         ** all of the platform-specific files (os_*.c) and is #included into those
+         ** files.
+         **
+         ** This file should be #included by the os_*.c files only.  It is not a
+         ** general purpose header file.
+         **
+         ** $Id: os_common.h,v 1.38 2009/02/24 18:40:50 danielk1977 Exp $
+         **
+         *************************************************************************
+         **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+         **  C#-SQLite is an independent reimplementation of the SQLite software library
+         **
+         **  $Header$
+         *************************************************************************
+         */
+        //#if !_OS_COMMON_H_
+        //#define _OS_COMMON_H_
+        /*
+         ** At least two bugs have slipped in because we changed the MEMORY_DEBUG
+         ** macro to SQLITE_DEBUG and some older makefiles have not yet made the
+         ** switch.  The following code should catch this problem at compile-time.
+         */
 #if MEMORY_DEBUG
 //# error "The MEMORY_DEBUG macro is obsolete.  Use SQLITE_DEBUG instead."
 #endif
@@ -62,16 +60,15 @@ namespace CS_SQLite3
 //#define OSTRACE7(X,Y,Z,A,B,C,D)
 #endif
 
-    /*
-** Macros for performance tracing.  Normally turned off.  Only works
-** on i486 hardware.
-*/
+        /*
+         ** Macros for performance tracing.  Normally turned off.  Only works
+         ** on i486 hardware.
+         */
 #if SQLITE_PERFORMANCE_TRACE
-
 /*
-** hwtime.h contains inline assembler code for implementing
-** high-performance timing routines.
-*/
+ ** hwtime.h contains inline assembler code for implementing
+ ** high-performance timing routines.
+ */
 //#include "hwtime.h"
 
 static sqlite_u3264 g_start;
@@ -80,18 +77,17 @@ static sqlite_u3264 g_elapsed;
 //#define TIMER_END         g_elapsed=sqlite3Hwtime()-g_start
 //#define TIMER_ELAPSED     g_elapsed
 #else
-    const int TIMER_START = 0;   //#define TIMER_START
-    const int TIMER_END = 0;     //#define TIMER_END
-    const int TIMER_ELAPSED = 0; //#define TIMER_ELAPSED     ((sqlite_u3264)0)
+        private const int TIMER_START = 0; //#define TIMER_START
+        private const int TIMER_END = 0; //#define TIMER_END
+        private const int TIMER_ELAPSED = 0; //#define TIMER_ELAPSED     ((sqlite_u3264)0)
 #endif
 
-    /*
-** If we compile with the SQLITE_TEST macro set, then the following block
-** of code will give us the ability to simulate a disk I/O error.  This
-** is used for testing the I/O recovery logic.
-*/
+        /*
+         ** If we compile with the SQLITE_TEST macro set, then the following block
+         ** of code will give us the ability to simulate a disk I/O error.  This
+         ** is used for testing the I/O recovery logic.
+         */
 #if SQLITE_TEST
-
     //static int sqlite3_io_error_hit = 0;            /* Total number of I/O Errors */
     //static int sqlite3_io_error_hardhit = 0;        /* Number of non-benign errors */
     //static int sqlite3_io_error_pending = 0;        /* Count down to first I/O error */
@@ -158,9 +154,9 @@ static sqlite_u3264 g_elapsed;
 //#define SimulateDiskfullError(A)
 #endif
 
-    /*
-** When testing, keep a count of the number of open files.
-*/
+        /*
+         ** When testing, keep a count of the number of open files.
+         */
 #if SQLITE_TEST
     //int sqlite3_open_file_count = 0;
     static void OpenCounter( int X )
@@ -170,6 +166,6 @@ static sqlite_u3264 g_elapsed;
 #else
 //#define OpenCounter(X)
 #endif
-    //#endif //* !_OS_COMMON_H_) */
-  }
+        //#endif //* !_OS_COMMON_H_) */
+    }
 }

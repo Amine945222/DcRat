@@ -1,24 +1,15 @@
-﻿using Server.MessagePack;
-using Server.Connection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Threading;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 
 namespace Server.Helper
 {
     public class AsyncTask
     {
-        public byte[] msgPack;
-        public string id;
         public bool admin;
         public List<string> doneClient;
+        public string id;
+        public byte[] msgPack;
 
-        public AsyncTask(byte[] _msgPack, string _id,bool _admin)
+        public AsyncTask(byte[] _msgPack, string _id, bool _admin)
         {
             msgPack = _msgPack;
             id = _id;
@@ -26,5 +17,4 @@ namespace Server.Helper
             doneClient = new List<string>();
         }
     }
-
 }

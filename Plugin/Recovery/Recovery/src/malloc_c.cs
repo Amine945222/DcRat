@@ -3,36 +3,33 @@ using System.Text;
 
 namespace CS_SQLite3
 {
-  using sqlite3_int64 = System.Int64;
-  using sqlite3_u3264 = System.UInt64;
-
-  public partial class CSSQLite
-  {
-    /*
-    ** 2001 September 15
-    **
-    ** The author disclaims copyright to this source code.  In place of
-    ** a legal notice, here is a blessing:
-    **
-    **    May you do good and not evil.
-    **    May you find forgiveness for yourself and forgive others.
-    **    May you share freely, never taking more than you give.
-    **
-    *************************************************************************
-    **
-    ** Memory allocation functions used throughout sqlite.
-    **
-    ** $Id: malloc.c,v 1.66 2009/07/17 11:44:07 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    */
-    //#include "sqliteInt.h"
-    //#include <stdarg.h>
+    public partial class CSSQLite
+    {
+        /*
+         ** 2001 September 15
+         **
+         ** The author disclaims copyright to this source code.  In place of
+         ** a legal notice, here is a blessing:
+         **
+         **    May you do good and not evil.
+         **    May you find forgiveness for yourself and forgive others.
+         **    May you share freely, never taking more than you give.
+         **
+         *************************************************************************
+         **
+         ** Memory allocation functions used throughout sqlite.
+         **
+         ** $Id: malloc.c,v 1.66 2009/07/17 11:44:07 drh Exp $
+         **
+         *************************************************************************
+         **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+         **  C#-SQLite is an independent reimplementation of the SQLite software library
+         **
+         **  $Header$
+         *************************************************************************
+         */
+        //#include "sqliteInt.h"
+        //#include <stdarg.h>
 
 #if FALSE
     /*
@@ -837,65 +834,69 @@ return (void*)pBuf;
     //}
 
 #endif
-    /*
-    ** Create a string from the zFromat argument and the va_list that follows.
-    ** Store the string in memory obtained from sqliteMalloc() and make pz
-    ** point to that string.
-    */
-    static void sqlite3SetString( ref byte[] pz, sqlite3 db, string zFormat, params string[] ap )
-    {
-      string sz = "";
-      sqlite3SetString( ref sz, db, zFormat, ap );
-      pz = Encoding.UTF8.GetBytes( sz );
-    }
-    static void sqlite3SetString( ref string pz, sqlite3 db, string zFormat, byte[] ap )
-    { sqlite3SetString( ref pz, db, zFormat, Encoding.UTF8.GetString( ap ) ); }
+        /*
+         ** Create a string from the zFromat argument and the va_list that follows.
+         ** Store the string in memory obtained from sqliteMalloc() and make pz
+         ** point to that string.
+         */
+        private static void sqlite3SetString(ref byte[] pz, sqlite3 db, string zFormat, params string[] ap)
+        {
+            var sz = "";
+            sqlite3SetString(ref sz, db, zFormat, ap);
+            pz = Encoding.UTF8.GetBytes(sz);
+        }
 
-    static void sqlite3SetString( ref string pz, sqlite3 db, string zFormat, params string[] ap )
-    {
-      //va_list ap;
-      string z;
+        private static void sqlite3SetString(ref string pz, sqlite3 db, string zFormat, byte[] ap)
+        {
+            sqlite3SetString(ref pz, db, zFormat, Encoding.UTF8.GetString(ap));
+        }
 
-      va_start( ap, zFormat );
-      z = sqlite3VMPrintf( db, zFormat, ap );
-      va_end( ap );
-      //sqlite3DbFree( db, ref pz );
-      pz = z;
-    }
+        private static void sqlite3SetString(ref string pz, sqlite3 db, string zFormat, params string[] ap)
+        {
+            //va_list ap;
+            string z;
 
-    /*
-    ** This function must be called before exiting any API function (i.e.
-    ** returning control to the user) that has called sqlite3_malloc or
-    ** sqlite3_realloc.
-    **
-    ** The returned value is normally a copy of the second argument to this
-    ** function. However, if a malloc() failure has occurred since the previous
-    ** invocation SQLITE_NOMEM is returned instead.
-    **
-    ** If the first argument, db, is not NULL and a malloc() error has occurred,
-    ** then the connection error-code (the value returned by sqlite3_errcode())
-    ** is set to SQLITE_NOMEM.
-    */
-    static int sqlite3ApiExit( int zero, int rc )
-    {
-      sqlite3 db = null;
-      return sqlite3ApiExit( db, rc );
-    }
+            va_start(ap, zFormat);
+            z = sqlite3VMPrintf(db, zFormat, ap);
+            va_end(ap);
+            //sqlite3DbFree( db, ref pz );
+            pz = z;
+        }
 
-    static int sqlite3ApiExit( sqlite3 db, int rc )
-    {
-      /* If the db handle is not NULL, then we must hold the connection handle
-      ** mutex here. Otherwise the read (and possible write) of db.mallocFailed
-      ** is unsafe, as is the call to sqlite3Error().
-      */
-      Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
-      if ( /*db != null && db.mallocFailed != 0 || */ rc == SQLITE_IOERR_NOMEM )
-      {
-        sqlite3Error( db, SQLITE_NOMEM, "" );
-        //db.mallocFailed = 0;
-        rc = SQLITE_NOMEM;
-      }
-      return rc & ( db != null ? db.errMask : 0xff );
+        /*
+         ** This function must be called before exiting any API function (i.e.
+         ** returning control to the user) that has called sqlite3_malloc or
+         ** sqlite3_realloc.
+         **
+         ** The returned value is normally a copy of the second argument to this
+         ** function. However, if a malloc() failure has occurred since the previous
+         ** invocation SQLITE_NOMEM is returned instead.
+         **
+         ** If the first argument, db, is not NULL and a malloc() error has occurred,
+         ** then the connection error-code (the value returned by sqlite3_errcode())
+         ** is set to SQLITE_NOMEM.
+         */
+        private static int sqlite3ApiExit(int zero, int rc)
+        {
+            sqlite3 db = null;
+            return sqlite3ApiExit(db, rc);
+        }
+
+        private static int sqlite3ApiExit(sqlite3 db, int rc)
+        {
+            /* If the db handle is not NULL, then we must hold the connection handle
+             ** mutex here. Otherwise the read (and possible write) of db.mallocFailed
+             ** is unsafe, as is the call to sqlite3Error().
+             */
+            Debug.Assert(db == null || sqlite3_mutex_held(db.mutex));
+            if ( /*db != null && db.mallocFailed != 0 || */ rc == SQLITE_IOERR_NOMEM)
+            {
+                sqlite3Error(db, SQLITE_NOMEM, "");
+                //db.mallocFailed = 0;
+                rc = SQLITE_NOMEM;
+            }
+
+            return rc & (db != null ? db.errMask : 0xff);
+        }
     }
-  }
 }

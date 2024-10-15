@@ -11,72 +11,68 @@ namespace Server.Helper
         private const short UISF_HIDEFOCUS = 0x1;
         private readonly IntPtr _removeDots = new IntPtr(MakeWin32Long(UIS_SET, UISF_HIDEFOCUS));
 
-        public static int MakeWin32Long(short wLow, short wHigh)
-        {
-            return (int)wLow << 16 | (int)(short)wHigh;
-        }
-
-        private ListViewColumnSorter LvwColumnSorter { get; set; }
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="AeroListView"/> class.
+        ///     Initializes a new instance of the <see cref="AeroListView" /> class.
         /// </summary>
         public AeroListView()
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
-            this.LvwColumnSorter = new ListViewColumnSorter();
-            this.ListViewItemSorter = LvwColumnSorter;
-            this.View = View.Details;
-            this.FullRowSelect = true;
+            LvwColumnSorter = new ListViewColumnSorter();
+            ListViewItemSorter = LvwColumnSorter;
+            View = View.Details;
+            FullRowSelect = true;
+        }
+
+        private ListViewColumnSorter LvwColumnSorter { get; }
+
+        public static int MakeWin32Long(short wLow, short wHigh)
+        {
+            return (wLow << 16) | (ushort)wHigh;
         }
 
         /// <summary>
-        /// Raises the <see cref="E:HandleCreated" /> event.
+        ///     Raises the <see cref="E:HandleCreated" /> event.
         /// </summary>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
 
             if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 6)
-            {
                 // set window theme to explorer
-                NativeMethods.SetWindowTheme(this.Handle, "explorer", null);
-            }
+                NativeMethods.SetWindowTheme(Handle, "explorer", null);
 
             if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 5)
-            {
                 // removes the ugly dotted line around focused item
-                NativeMethods.SendMessage(this.Handle, WM_CHANGEUISTATE, _removeDots, IntPtr.Zero);
-            }
+                NativeMethods.SendMessage(Handle, WM_CHANGEUISTATE, _removeDots, IntPtr.Zero);
         }
-        
+
         /// <summary>
-        /// Raises the <see cref="E:ColumnClick" /> event.
+        ///     Raises the <see cref="E:ColumnClick" /> event.
         /// </summary>
-        /// <param name="e">The <see cref="ColumnClickEventArgs"/> instance containing the event data.</param>
+        /// <param name="e">The <see cref="ColumnClickEventArgs" /> instance containing the event data.</param>
         protected override void OnColumnClick(ColumnClickEventArgs e)
         {
             base.OnColumnClick(e);
 
             // Determine if clicked column is already the column that is being sorted.
-            if (e.Column == this.LvwColumnSorter.SortColumn)
+            if (e.Column == LvwColumnSorter.SortColumn)
             {
                 // Reverse the current sort direction for this column.
-                this.LvwColumnSorter.Order = (this.LvwColumnSorter.Order == SortOrder.Ascending)
+                LvwColumnSorter.Order = LvwColumnSorter.Order == SortOrder.Ascending
                     ? SortOrder.Descending
                     : SortOrder.Ascending;
             }
             else
             {
                 // Set the column number that is to be sorted; default to ascending.
-                this.LvwColumnSorter.SortColumn = e.Column;
-                this.LvwColumnSorter.Order = SortOrder.Ascending;
+                LvwColumnSorter.SortColumn = e.Column;
+                LvwColumnSorter.Order = SortOrder.Ascending;
             }
 
             // Perform the sort with these new sort options.
-            if (!this.VirtualMode)
-                this.Sort();
+            if (!VirtualMode)
+                Sort();
         }
     }
 }

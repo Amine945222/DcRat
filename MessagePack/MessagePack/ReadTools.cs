@@ -1,28 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MessagePackLib.MessagePack
 {
-    class ReadTools
+    internal class ReadTools
     {
-        public static String ReadString(Stream ms, int len)
+        public static string ReadString(Stream ms, int len)
         {
-            byte[] rawBytes = new byte[len];
+            var rawBytes = new byte[len];
             ms.Read(rawBytes, 0, len);
             return BytesTools.GetString(rawBytes);
         }
 
-        public static String ReadString(Stream ms)
+        public static string ReadString(Stream ms)
         {
-            byte strFlag = (byte)ms.ReadByte();
+            var strFlag = (byte)ms.ReadByte();
             return ReadString(strFlag, ms);
         }
 
-        public static String ReadString(byte strFlag, Stream ms)
+        public static string ReadString(byte strFlag, Stream ms)
         {
             //
             //fixstr stores a byte array whose length is upto 31 bytes:
@@ -53,8 +49,8 @@ namespace MessagePackLib.MessagePack
             //* N is the length of data   
 
             byte[] rawBytes = null;
-            int len = 0;
-            if ((strFlag >= 0xA0) && (strFlag <= 0xBF))
+            var len = 0;
+            if (strFlag >= 0xA0 && strFlag <= 0xBF)
             {
                 len = strFlag - 0xA0;
             }
@@ -76,6 +72,7 @@ namespace MessagePackLib.MessagePack
                 rawBytes = BytesTools.SwapBytes(rawBytes);
                 len = BitConverter.ToInt32(rawBytes, 0);
             }
+
             rawBytes = new byte[len];
             ms.Read(rawBytes, 0, len);
             return BytesTools.GetString(rawBytes);

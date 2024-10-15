@@ -1,43 +1,38 @@
-using System.Diagnostics;
-
 namespace CS_SQLite3
 {
-  using sqlite3_stmt = CSSQLite.Vdbe;
+    public partial class CSSQLite
+    {
+        /*
+         ** 2007 May 1
+         **
+         ** The author disclaims copyright to this source code.  In place of
+         ** a legal notice, here is a blessing:
+         **
+         **    May you do good and not evil.
+         **    May you find forgiveness for yourself and forgive others.
+         **    May you share freely, never taking more than you give.
+         **
+         *************************************************************************
+         **
+         ** This file contains code used to implement incremental BLOB I/O.
+         **
+         ** $Id: vdbeblob.c,v 1.35 2009/07/02 07:47:33 danielk1977 Exp $
+         **
+         *************************************************************************
+         **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+         **  C#-SQLite is an independent reimplementation of the SQLite software library
+         **
+         **  $Header$
+         *************************************************************************
+         */
 
-  public partial class CSSQLite
-  {
-    /*
-    ** 2007 May 1
-    **
-    ** The author disclaims copyright to this source code.  In place of
-    ** a legal notice, here is a blessing:
-    **
-    **    May you do good and not evil.
-    **    May you find forgiveness for yourself and forgive others.
-    **    May you share freely, never taking more than you give.
-    **
-    *************************************************************************
-    **
-    ** This file contains code used to implement incremental BLOB I/O.
-    **
-    ** $Id: vdbeblob.c,v 1.35 2009/07/02 07:47:33 danielk1977 Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    */
-
-    //#include "sqliteInt.h"
-    //#include "vdbeInt.h"
+        //#include "sqliteInt.h"
+        //#include "vdbeInt.h"
 
 #if !SQLITE_OMIT_INCRBLOB
-
 /*
-** Valid sqlite3_blob* handles point to Incrblob structures.
-*/
+ ** Valid sqlite3_blob* handles point to Incrblob structures.
+ */
 //typedef struct Incrblob Incrblob;
 public struct Incrblob
 {
@@ -50,8 +45,8 @@ sqlite3 db;            /* The associated database */
 };
 
 /*
-** Open a blob handle.
-*/
+ ** Open a blob handle.
+ */
 //int sqlite3_blob_open(
 //  sqlite3* db,            /* The database connection */
 //  const char *zDb,        /* The attached database containing the blob */
@@ -313,8 +308,8 @@ sqlite3 db;            /* The associated database */
 //}
 
 /*
-** Perform a read or write operation on a blob
-*/
+ ** Perform a read or write operation on a blob
+ */
 //static int blobReadWrite(
 //  sqlite3_blob pBlob,
 //  void *z,
@@ -364,30 +359,30 @@ sqlite3 db;            /* The associated database */
 //}
 
 /*
-** Read data from a blob handle.
-*/
+ ** Read data from a blob handle.
+ */
 //int sqlite3_blob_read(sqlite3_blob pBlob, void *z, int n, int iOffset){
 //  return blobReadWrite(pBlob, z, n, iOffset, sqlite3BtreeData);
 //}
 
 /*
-** Write data to a blob handle.
-*/
+ ** Write data to a blob handle.
+ */
 //int sqlite3_blob_write(sqlite3_blob pBlob, const void *z, int n, int iOffset){
 //  return blobReadWrite(pBlob, (void *)z, n, iOffset, sqlite3BtreePutData);
 //}
 
 /*
-** Query a blob handle for the size of the data.
-**
-** The Incrblob.nByte field is fixed for the lifetime of the Incrblob
-** so no mutex is required for access.
-*/
+ ** Query a blob handle for the size of the data.
+ **
+ ** The Incrblob.nByte field is fixed for the lifetime of the Incrblob
+ ** so no mutex is required for access.
+ */
 //int sqlite3_blob_bytes(sqlite3_blob pBlob){
 //  Incrblob p = (Incrblob *)pBlob;
 //  return p ? p->nByte : 0;
 //}
 
 #endif // * #if !SQLITE_OMIT_INCRBLOB */
-  }
+    }
 }

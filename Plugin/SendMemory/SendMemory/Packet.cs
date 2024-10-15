@@ -1,6 +1,6 @@
-﻿using Plugin.Handler;
+﻿using System;
 using MessagePackLib.MessagePack;
-using System;
+using Plugin.Handler;
 
 namespace Plugin
 {
@@ -10,15 +10,15 @@ namespace Plugin
         {
             try
             {
-                MsgPack unpack_msgpack = new MsgPack();
+                var unpack_msgpack = new MsgPack();
                 unpack_msgpack.DecodeFromBytes((byte[])data);
                 switch (unpack_msgpack.ForcePathObject("Pac_ket").AsString)
                 {
                     case "sendMemory":
-                        {
-                            new HandleSendTo().ToMemory(unpack_msgpack);
-                            break;
-                        }
+                    {
+                        new HandleSendTo().ToMemory(unpack_msgpack);
+                        break;
+                    }
                 }
             }
             catch (Exception ex)
@@ -29,7 +29,7 @@ namespace Plugin
 
         public static void Error(string ex)
         {
-            MsgPack msgpack = new MsgPack();
+            var msgpack = new MsgPack();
             msgpack.ForcePathObject("Pac_ket").AsString = "Error";
             msgpack.ForcePathObject("Error").AsString = ex;
             Connection.Send(msgpack.Encode2Bytes());
@@ -37,11 +37,10 @@ namespace Plugin
 
         public static void Log(string message)
         {
-            MsgPack msgpack = new MsgPack();
+            var msgpack = new MsgPack();
             msgpack.ForcePathObject("Pac_ket").AsString = "Logs";
             msgpack.ForcePathObject("Message").AsString = message;
             Connection.Send(msgpack.Encode2Bytes());
         }
     }
-
 }

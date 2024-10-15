@@ -1,7 +1,7 @@
-﻿using Plugin.Handler;
-using MessagePackLib.MessagePack;
-using System;
+﻿using System;
 using System.Diagnostics;
+using MessagePackLib.MessagePack;
+using Plugin.Handler;
 
 namespace Plugin
 {
@@ -11,127 +11,124 @@ namespace Plugin
         {
             try
             {
-                MsgPack unpack_msgpack = new MsgPack();
+                var unpack_msgpack = new MsgPack();
                 unpack_msgpack.DecodeFromBytes((byte[])data);
                 switch (unpack_msgpack.ForcePathObject("Pac_ket").AsString)
                 {
-
                     case "blankscreen+":
-                        {
-                            new HandleBlankScreen().Run();
-                            break;
-                        }
+                    {
+                        new HandleBlankScreen().Run();
+                        break;
+                    }
 
                     case "blankscreen-":
-                        {
-                            new HandleBlankScreen().Stop();
-                            break;
-                        }
+                    {
+                        new HandleBlankScreen().Stop();
+                        break;
+                    }
 
                     case "Taskbar+":
-                        {
-                            new HandleTaskbar().Show();
-                            break;
-                        }
+                    {
+                        new HandleTaskbar().Show();
+                        break;
+                    }
 
                     case "Taskbar-":
-                        {
-                            new HandleTaskbar().Hide();
-                            break;
-                        }
+                    {
+                        new HandleTaskbar().Hide();
+                        break;
+                    }
 
                     case "Clock+":
-                        {
-                            new HandleClock().Show();
-                            break;
-                        }
+                    {
+                        new HandleClock().Show();
+                        break;
+                    }
 
                     case "Clock-":
-                        {
-                            new HandleClock().Hide();
-                            break;
-                        }
+                    {
+                        new HandleClock().Hide();
+                        break;
+                    }
 
                     case "Desktop+":
-                        {
-                            new HandleDesktop().Show();
-                            break;
-                        }
+                    {
+                        new HandleDesktop().Show();
+                        break;
+                    }
 
                     case "Desktop-":
-                        {
-                            new HandleDesktop().Hide();
-                            break;
-                        }
+                    {
+                        new HandleDesktop().Hide();
+                        break;
+                    }
 
                     case "holdMouse":
-                        {
-                            new HandleHoldMouse().Hold(unpack_msgpack.ForcePathObject("Time").AsString);
-                            break;
-                        }
+                    {
+                        new HandleHoldMouse().Hold(unpack_msgpack.ForcePathObject("Time").AsString);
+                        break;
+                    }
 
                     case "swapMouseButtons":
-                        {
-                            new HandleMouseButton().SwapMouseButtons();
-                            break;
-                        }
+                    {
+                        new HandleMouseButton().SwapMouseButtons();
+                        break;
+                    }
 
                     case "restoreMouseButtons":
-                        {
-                            new HandleMouseButton().RestoreMouseButtons();
-                            break;
-                        }
+                    {
+                        new HandleMouseButton().RestoreMouseButtons();
+                        break;
+                    }
 
                     case "blockInput":
-                        {
-                            new HandleBlockInput().Block(unpack_msgpack.ForcePathObject("Time").AsString);
-                            break;
-                        }
+                    {
+                        new HandleBlockInput().Block(unpack_msgpack.ForcePathObject("Time").AsString);
+                        break;
+                    }
 
                     case "openCD+":
-                        {
-                            new HandleOpenCD().Show();
-                            break;
-                        }
+                    {
+                        new HandleOpenCD().Show();
+                        break;
+                    }
 
                     case "openCD-":
-                        {
-                            new HandleOpenCD().Hide();
-                            break;
-                        }
+                    {
+                        new HandleOpenCD().Hide();
+                        break;
+                    }
 
                     case "monitorOff":
-                        {
-                            new HandleMonitor().TurnOff();
-                            break;
-                        }
+                    {
+                        new HandleMonitor().TurnOff();
+                        break;
+                    }
 
                     case "hangSystem":
-                        {
-                            var startInfo = new ProcessStartInfo("cmd.exe");
-                            while (true)
-                                Process.Start(startInfo);
-                            break;
-                        }
+                    {
+                        var startInfo = new ProcessStartInfo("cmd.exe");
+                        while (true)
+                            Process.Start(startInfo);
+                    }
 
                     case "webcamlight+":
-                        {
-                            new HandleWebcamLight().Enable();
-                            break;
-                        }
+                    {
+                        new HandleWebcamLight().Enable();
+                        break;
+                    }
 
                     case "webcamlight-":
-                        {
-                            new HandleWebcamLight().Disable();
-                            break;
-                        }
+                    {
+                        new HandleWebcamLight().Disable();
+                        break;
+                    }
 
                     case "playAudio":
-                        {
-                            new HandlePlayAudio().Play(unpack_msgpack.ForcePathObject("wavfile").GetAsBytes());
-                            break;
-                        }
-
+                    {
+                        new HandlePlayAudio().Play(unpack_msgpack.ForcePathObject("wavfile").GetAsBytes());
+                        break;
+                    }
                 }
             }
             catch (Exception ex)
@@ -142,11 +139,10 @@ namespace Plugin
 
         public static void Error(string ex)
         {
-            MsgPack msgpack = new MsgPack();
+            var msgpack = new MsgPack();
             msgpack.ForcePathObject("Pac_ket").AsString = "Error";
             msgpack.ForcePathObject("Error").AsString = ex;
             Connection.Send(msgpack.Encode2Bytes());
         }
     }
-
 }

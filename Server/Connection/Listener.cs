@@ -1,14 +1,13 @@
-﻿using System.Net;
-using System.Net.Sockets;
-using System;
-using System.Windows.Forms;
+﻿using System;
 using System.Drawing;
+using System.Net;
+using System.Net.Sockets;
+using System.Windows.Forms;
 using Server.Handle_Packet;
-using System.Diagnostics;
 
 namespace Server.Connection
 {
-    class Listener
+    internal class Listener
     {
         private Socket Server { get; set; }
 
@@ -16,11 +15,11 @@ namespace Server.Connection
         {
             try
             {
-                IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Any, Convert.ToInt32(port));
+                var ipEndPoint = new IPEndPoint(IPAddress.Any, Convert.ToInt32(port));
                 Server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
                 {
                     SendBufferSize = 50 * 1024,
-                    ReceiveBufferSize = 50 * 1024,
+                    ReceiveBufferSize = 50 * 1024
                 };
                 Server.Bind(ipEndPoint);
                 Server.Listen(500);
@@ -40,7 +39,9 @@ namespace Server.Connection
             {
                 new Clients(Server.EndAccept(ar));
             }
-            catch { }
+            catch
+            {
+            }
             finally
             {
                 Server.BeginAccept(EndAccept, null);
